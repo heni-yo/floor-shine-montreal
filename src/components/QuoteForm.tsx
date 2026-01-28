@@ -1,19 +1,33 @@
-import { useState } from 'react';
-import { Send, CheckCircle } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Send, CheckCircle, Upload, X, Image } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface FormData {
   firstName: string;
   lastName: string;
   phone: string;
   email: string;
+  address: string;
+  postalCode: string;
   city: string;
-  serviceType: string;
-  woodType: string;
-  area: string;
+  services: {
+    floor: boolean;
+    stairs: boolean;
+    repair: boolean;
+  };
   date: string;
-  message: string;
-  consent: boolean;
+  details: string;
+  area: string;
+  wantColor: string;
+  stairSteps: string;
+  specialNeeds: string;
+  photos: File[];
 }
 
 interface FormErrors {
@@ -22,19 +36,28 @@ interface FormErrors {
 
 const QuoteForm = () => {
   const { t } = useLanguage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
     phone: '',
     email: '',
+    address: '',
+    postalCode: '',
     city: '',
-    serviceType: '',
-    woodType: '',
-    area: '',
+    services: {
+      floor: false,
+      stairs: false,
+      repair: false,
+    },
     date: '',
-    message: '',
-    consent: false,
+    details: '',
+    area: '',
+    wantColor: '',
+    stairSteps: '',
+    specialNeeds: '',
+    photos: [],
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -57,14 +80,25 @@ const QuoteForm = () => {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = t('form.invalidEmail');
     }
+    if (!formData.address.trim()) {
+      newErrors.address = t('form.required');
+    }
+    if (!formData.postalCode.trim()) {
+      newErrors.postalCode = t('form.required');
+    } else if (!/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(formData.postalCode)) {
+      newErrors.postalCode = t('form.invalidPostalCode');
+    }
     if (!formData.city.trim()) {
       newErrors.city = t('form.required');
     }
-    if (!formData.serviceType) {
-      newErrors.serviceType = t('form.required');
+    if (!formData.services.floor && !formData.services.stairs && !formData.services.repair) {
+      newErrors.services = t('form.selectService');
     }
-    if (!formData.consent) {
-      newErrors.consent = t('form.required');
+    if (!formData.date) {
+      newErrors.date = t('form.required');
+    }
+    if (!formData.area.trim()) {
+      newErrors.area = t('form.required');
     }
 
     setErrors(newErrors);
@@ -75,19 +109,15 @@ const QuoteForm = () => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Here you would normally send the data to your backend
       console.log('Form submitted:', formData);
       setIsSubmitted(true);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
     
-    setFormData(prev => ({ ...prev, [name]: newValue }));
-    
-    // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -95,6 +125,39 @@ const QuoteForm = () => {
         return newErrors;
       });
     }
+  };
+
+  const handleServiceChange = (service: 'floor' | 'stairs' | 'repair', checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      services: { ...prev.services, [service]: checked }
+    }));
+    
+    if (errors.services) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.services;
+        return newErrors;
+      });
+    }
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remainingSlots = 10 - formData.photos.length;
+    const newPhotos = files.slice(0, remainingSlots);
+    
+    setFormData(prev => ({
+      ...prev,
+      photos: [...prev.photos, ...newPhotos]
+    }));
+  };
+
+  const removePhoto = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index)
+    }));
   };
 
   if (isSubmitted) {
@@ -129,200 +192,307 @@ const QuoteForm = () => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="card-wood">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* First Name */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.firstName')} *
-                </label>
-                <input
-                  type="text"
+          <form onSubmit={handleSubmit} className="card-wood space-y-6">
+            {/* Contact Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">{t('form.firstName')} *</Label>
+                <Input
+                  id="firstName"
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
-                  className="input-wood"
+                  className="bg-background"
                 />
                 {errors.firstName && (
-                  <p className="text-destructive text-sm mt-1">{errors.firstName}</p>
+                  <p className="text-destructive text-sm">{errors.firstName}</p>
                 )}
               </div>
 
-              {/* Last Name */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.lastName')} *
-                </label>
-                <input
-                  type="text"
+              <div className="space-y-2">
+                <Label htmlFor="lastName">{t('form.lastName')} *</Label>
+                <Input
+                  id="lastName"
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="input-wood"
+                  className="bg-background"
                 />
                 {errors.lastName && (
-                  <p className="text-destructive text-sm mt-1">{errors.lastName}</p>
+                  <p className="text-destructive text-sm">{errors.lastName}</p>
                 )}
               </div>
 
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.phone')} *
-                </label>
-                <input
-                  type="tel"
+              <div className="space-y-2">
+                <Label htmlFor="phone">{t('form.phone')} *</Label>
+                <Input
+                  id="phone"
                   name="phone"
+                  type="tel"
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="(514) 123-4567"
-                  className="input-wood"
+                  className="bg-background"
                 />
                 {errors.phone && (
-                  <p className="text-destructive text-sm mt-1">{errors.phone}</p>
+                  <p className="text-destructive text-sm">{errors.phone}</p>
                 )}
               </div>
 
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.email')} *
-                </label>
-                <input
-                  type="email"
+              <div className="space-y-2">
+                <Label htmlFor="email">{t('form.email')} *</Label>
+                <Input
+                  id="email"
                   name="email"
+                  type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="input-wood"
+                  className="bg-background"
                 />
                 {errors.email && (
-                  <p className="text-destructive text-sm mt-1">{errors.email}</p>
+                  <p className="text-destructive text-sm">{errors.email}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Project Address */}
+            <div className="space-y-2">
+              <Label htmlFor="address">{t('form.address')} *</Label>
+              <Input
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                className="bg-background"
+              />
+              {errors.address && (
+                <p className="text-destructive text-sm">{errors.address}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="postalCode">{t('form.postalCode')} *</Label>
+                <Input
+                  id="postalCode"
+                  name="postalCode"
+                  value={formData.postalCode}
+                  onChange={handleChange}
+                  placeholder="H2X 1Y4"
+                  className="bg-background"
+                />
+                {errors.postalCode && (
+                  <p className="text-destructive text-sm">{errors.postalCode}</p>
                 )}
               </div>
 
-              {/* City */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.city')} *
-                </label>
-                <input
-                  type="text"
+              <div className="space-y-2">
+                <Label htmlFor="city">{t('form.city')} *</Label>
+                <Input
+                  id="city"
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
-                  className="input-wood"
+                  className="bg-background"
                 />
                 {errors.city && (
-                  <p className="text-destructive text-sm mt-1">{errors.city}</p>
+                  <p className="text-destructive text-sm">{errors.city}</p>
                 )}
               </div>
+            </div>
 
-              {/* Service Type */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.serviceType')} *
-                </label>
-                <select
-                  name="serviceType"
-                  value={formData.serviceType}
-                  onChange={handleChange}
-                  className="input-wood"
-                >
-                  <option value="">--</option>
-                  <option value="floor">{t('form.serviceType.floor')}</option>
-                  <option value="stairs">{t('form.serviceType.stairs')}</option>
-                  <option value="repair">{t('form.serviceType.repair')}</option>
-                </select>
-                {errors.serviceType && (
-                  <p className="text-destructive text-sm mt-1">{errors.serviceType}</p>
-                )}
-              </div>
-
-              {/* Wood Type */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.woodType')}
-                </label>
-                <input
-                  type="text"
-                  name="woodType"
-                  value={formData.woodType}
-                  onChange={handleChange}
-                  placeholder="Ex: Érable, Chêne..."
-                  className="input-wood"
-                />
-              </div>
-
-              {/* Area */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.area')}
-                </label>
-                <input
-                  type="text"
-                  name="area"
-                  value={formData.area}
-                  onChange={handleChange}
-                  placeholder="Ex: 500"
-                  className="input-wood"
-                />
-              </div>
-
-              {/* Date */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.date')}
-                </label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  className="input-wood"
-                />
-              </div>
-
-              {/* Message */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  {t('form.message')}
-                </label>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  rows={4}
-                  className="input-wood resize-none"
-                />
-              </div>
-
-              {/* Consent */}
-              <div className="md:col-span-2">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="consent"
-                    checked={formData.consent}
-                    onChange={handleChange}
-                    className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-primary"
+            {/* Services Selection */}
+            <div className="space-y-3">
+              <Label>{t('form.servicesTitle')} *</Label>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="service-floor"
+                    checked={formData.services.floor}
+                    onCheckedChange={(checked) => handleServiceChange('floor', checked as boolean)}
                   />
-                  <span className="text-sm text-muted-foreground">
-                    {t('form.consent')} *
-                  </span>
-                </label>
-                {errors.consent && (
-                  <p className="text-destructive text-sm mt-1">{errors.consent}</p>
-                )}
+                  <Label htmlFor="service-floor" className="font-normal cursor-pointer">
+                    {t('form.service.floor')}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="service-stairs"
+                    checked={formData.services.stairs}
+                    onCheckedChange={(checked) => handleServiceChange('stairs', checked as boolean)}
+                  />
+                  <Label htmlFor="service-stairs" className="font-normal cursor-pointer">
+                    {t('form.service.stairs')}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="service-repair"
+                    checked={formData.services.repair}
+                    onCheckedChange={(checked) => handleServiceChange('repair', checked as boolean)}
+                  />
+                  <Label htmlFor="service-repair" className="font-normal cursor-pointer">
+                    {t('form.service.repair')}
+                  </Label>
+                </div>
               </div>
+              {errors.services && (
+                <p className="text-destructive text-sm">{errors.services}</p>
+              )}
+            </div>
+
+            {/* Date */}
+            <div className="space-y-2">
+              <Label htmlFor="date">{t('form.date')} *</Label>
+              <Input
+                id="date"
+                name="date"
+                type="date"
+                value={formData.date}
+                onChange={handleChange}
+                className="bg-background"
+              />
+              {errors.date && (
+                <p className="text-destructive text-sm">{errors.date}</p>
+              )}
+            </div>
+
+            {/* Details */}
+            <div className="space-y-2">
+              <Label htmlFor="details">{t('form.details')}</Label>
+              <Textarea
+                id="details"
+                name="details"
+                value={formData.details}
+                onChange={handleChange}
+                rows={4}
+                className="bg-background resize-none"
+              />
+            </div>
+
+            {/* Area */}
+            <div className="space-y-2">
+              <Label htmlFor="area">{t('form.area')} *</Label>
+              <Input
+                id="area"
+                name="area"
+                value={formData.area}
+                onChange={handleChange}
+                placeholder="Ex: 500"
+                className="bg-background"
+              />
+              <p className="text-sm text-muted-foreground">{t('form.areaHelper')}</p>
+              {errors.area && (
+                <p className="text-destructive text-sm">{errors.area}</p>
+              )}
+            </div>
+
+            {/* Want Color */}
+            <div className="space-y-3">
+              <Label>{t('form.wantColor')}</Label>
+              <RadioGroup
+                value={formData.wantColor}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, wantColor: value }))}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="color-yes" />
+                  <Label htmlFor="color-yes" className="font-normal cursor-pointer">
+                    {t('form.colorYes')}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="color-no" />
+                  <Label htmlFor="color-no" className="font-normal cursor-pointer">
+                    {t('form.colorNo')}
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Stair Steps - Conditional */}
+            {formData.services.stairs && (
+              <div className="space-y-2">
+                <Label htmlFor="stairSteps">{t('form.stairSteps')}</Label>
+                <Input
+                  id="stairSteps"
+                  name="stairSteps"
+                  type="number"
+                  min="0"
+                  value={formData.stairSteps}
+                  onChange={handleChange}
+                  className="bg-background"
+                />
+                <p className="text-sm text-muted-foreground">{t('form.stairStepsHelper')}</p>
+              </div>
+            )}
+
+            {/* Photo Upload */}
+            <div className="space-y-3">
+              <Label>{t('form.photos')}</Label>
+              <p className="text-sm text-muted-foreground">{t('form.photosMax')}</p>
+              
+              <div 
+                className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  {formData.photos.length}/10
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                  disabled={formData.photos.length >= 10}
+                />
+              </div>
+
+              {formData.photos.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
+                  {formData.photos.map((photo, index) => (
+                    <div key={index} className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+                      <img
+                        src={URL.createObjectURL(photo)}
+                        alt={`Photo ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <p className="text-xs text-muted-foreground">{t('form.uploadNote')}</p>
+            </div>
+
+            {/* Special Needs */}
+            <div className="space-y-2">
+              <Label htmlFor="specialNeeds">{t('form.specialNeeds')}</Label>
+              <Textarea
+                id="specialNeeds"
+                name="specialNeeds"
+                value={formData.specialNeeds}
+                onChange={handleChange}
+                rows={3}
+                className="bg-background resize-none"
+              />
             </div>
 
             {/* Submit Button */}
-            <div className="mt-8">
-              <button type="submit" className="btn-primary w-full py-4 text-lg">
-                <Send className="w-5 h-5" />
-                {t('form.submit')}
-              </button>
-            </div>
+            <Button type="submit" size="lg" className="w-full">
+              <Send className="w-5 h-5" />
+              {t('form.submit')}
+            </Button>
           </form>
         </div>
       </div>
