@@ -1,0 +1,294 @@
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+
+type Language = 'fr' | 'en';
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: string) => string;
+}
+
+const translations: Record<Language, Record<string, string>> = {
+  fr: {
+    // Navigation
+    'nav.services': 'Services',
+    'nav.why': 'Pourquoi nous',
+    'nav.process': 'Processus',
+    'nav.gallery': 'Galerie',
+    'nav.testimonials': 'Témoignages',
+    'nav.faq': 'FAQ',
+    'nav.contact': 'Contact',
+    'nav.quote': 'Soumission gratuite',
+
+    // Hero
+    'hero.title': 'Experts en Sablage de Plancher',
+    'hero.subtitle': 'Montréal et environs',
+    'hero.description': 'Redonnez vie à vos planchers de bois avec notre service professionnel de sablage. Qualité supérieure, résultats impeccables.',
+    'hero.cta.quote': 'Demander une soumission',
+    'hero.cta.call': 'Appelez-nous',
+
+    // Form
+    'form.title': 'Soumission Gratuite',
+    'form.subtitle': 'Obtenez votre estimation sans engagement',
+    'form.firstName': 'Prénom',
+    'form.lastName': 'Nom',
+    'form.phone': 'Téléphone',
+    'form.email': 'Courriel',
+    'form.city': 'Ville / Secteur',
+    'form.serviceType': 'Type de service',
+    'form.serviceType.floor': 'Sablage de plancher',
+    'form.serviceType.stairs': 'Sablage d\'escalier',
+    'form.serviceType.repair': 'Réparation de planchers',
+    'form.woodType': 'Type de bois (optionnel)',
+    'form.area': 'Superficie approximative (pi²)',
+    'form.date': 'Date souhaitée (optionnel)',
+    'form.message': 'Message / Détails',
+    'form.consent': 'J\'accepte d\'être contacté concernant ma demande de soumission.',
+    'form.submit': 'Envoyer ma demande',
+    'form.success': 'Merci! Votre demande a été envoyée avec succès. Nous vous contacterons sous peu.',
+    'form.required': 'Ce champ est requis',
+    'form.invalidEmail': 'Courriel invalide',
+    'form.invalidPhone': 'Numéro de téléphone invalide',
+
+    // Services
+    'services.title': 'Nos Services',
+    'services.subtitle': 'Des solutions professionnelles pour vos planchers de bois',
+    'services.floor.title': 'Sablage de Plancher',
+    'services.floor.description': 'Restaurez la beauté naturelle de vos planchers de bois franc. Notre équipe utilise des techniques professionnelles pour un fini impeccable.',
+    'services.floor.benefits': 'Enlèvement des rayures et imperfections • Application de teinture sur mesure • Finition durable et résistante',
+    'services.stairs.title': 'Sablage d\'Escalier',
+    'services.stairs.description': 'Transformez vos escaliers en bois avec un sablage professionnel. Chaque marche reçoit une attention particulière.',
+    'services.stairs.benefits': 'Travail minutieux sur chaque marche • Harmonisation avec vos planchers • Finition antidérapante disponible',
+    'services.repair.title': 'Réparation de Planchers',
+    'services.repair.description': 'Réparez les dommages, remplacez les lattes abîmées et corrigez les imperfections avant le sablage.',
+    'services.repair.benefits': 'Remplacement de lattes endommagées • Correction des planches gondolées • Réparation des joints et fissures',
+    'services.cta': 'Demander une soumission',
+
+    // Why Us
+    'why.title': 'Pourquoi Nous Choisir',
+    'why.subtitle': 'L\'excellence au service de vos planchers',
+    'why.quality.title': 'Qualité Supérieure',
+    'why.quality.description': 'Nous utilisons des équipements professionnels et des produits de haute qualité pour des résultats durables.',
+    'why.detail.title': 'Souci du Détail',
+    'why.detail.description': 'Chaque projet reçoit une attention minutieuse, des coins aux bordures, pour un fini parfait.',
+    'why.timing.title': 'Respect des Délais',
+    'why.timing.description': 'Nous respectons les échéanciers convenus et vous tenons informés à chaque étape.',
+    'why.transparency.title': 'Transparence',
+    'why.transparency.description': 'Prix clairs, sans surprise. Vous savez exactement ce que vous payez.',
+    'why.satisfaction.title': 'Satisfaction Garantie',
+    'why.satisfaction.description': 'Votre satisfaction est notre priorité. Nous ne partons pas tant que vous n\'êtes pas satisfait.',
+    'why.experience.title': 'Expérience Prouvée',
+    'why.experience.description': 'Des années d\'expertise dans le sablage de planchers à Montréal et ses environs.',
+
+    // Process
+    'process.title': 'Notre Processus',
+    'process.subtitle': 'Un travail méthodique pour des résultats impeccables',
+    'process.step1.title': 'Évaluation',
+    'process.step1.description': 'Visite gratuite pour évaluer l\'état de vos planchers et établir un plan de travail personnalisé.',
+    'process.step2.title': 'Préparation',
+    'process.step2.description': 'Protection des murs, meubles et préparation de la surface pour le sablage.',
+    'process.step3.title': 'Sablage',
+    'process.step3.description': 'Sablage professionnel en plusieurs passages pour une surface parfaitement lisse.',
+    'process.step4.title': 'Finition',
+    'process.step4.description': 'Application de teinture (si désirée) et de vernis protecteur de haute qualité.',
+    'process.step5.title': 'Inspection',
+    'process.step5.description': 'Vérification finale avec vous pour s\'assurer de votre entière satisfaction.',
+
+    // Gallery
+    'gallery.title': 'Galerie',
+    'gallery.subtitle': 'Découvrez nos réalisations',
+    'gallery.before': 'Avant',
+    'gallery.after': 'Après',
+
+    // Testimonials
+    'testimonials.title': 'Témoignages',
+    'testimonials.subtitle': 'Ce que nos clients disent',
+
+    // Areas
+    'areas.title': 'Zones Desservies',
+    'areas.subtitle': 'Nous couvrons Montréal et ses environs',
+    'areas.description': 'Notre équipe se déplace dans toute la grande région de Montréal pour vous offrir un service de qualité.',
+
+    // FAQ
+    'faq.title': 'Questions Fréquentes',
+    'faq.subtitle': 'Tout ce que vous devez savoir',
+    'faq.q1': 'Combien de temps dure le sablage d\'un plancher?',
+    'faq.a1': 'En général, le sablage d\'un plancher prend de 2 à 4 jours selon la superficie et l\'état du plancher. Cela inclut le temps de séchage entre les couches de vernis.',
+    'faq.q2': 'Comment préparer ma maison avant le sablage?',
+    'faq.a2': 'Nous vous recommandons de retirer les meubles et objets de la pièce. Nous nous occupons de protéger les murs et les zones adjacentes.',
+    'faq.q3': 'Y a-t-il une odeur après le sablage?',
+    'faq.a3': 'Une légère odeur de vernis peut persister pendant quelques jours. Nous recommandons une bonne ventilation. Nos produits sont à faible émission de COV.',
+    'faq.q4': 'Combien de temps avant de pouvoir marcher sur le plancher?',
+    'faq.a4': 'Généralement, vous pouvez marcher délicatement sur le plancher après 24 heures. Le temps de cure complet est d\'environ 7 jours.',
+    'faq.q5': 'Offrez-vous une garantie sur vos travaux?',
+    'faq.a5': 'Oui, nous offrons une garantie sur tous nos travaux. Les détails vous seront fournis lors de la soumission.',
+    'faq.q6': 'Quel est le meilleur moment pour faire sabler mon plancher?',
+    'faq.a6': 'Le sablage peut être fait toute l\'année. Cependant, le printemps et l\'automne sont idéaux car l\'humidité est modérée.',
+    'faq.q7': 'Puis-je changer la couleur de mon plancher?',
+    'faq.a7': 'Absolument! Après le sablage, nous pouvons appliquer une teinture de la couleur de votre choix avant la couche de finition.',
+    'faq.q8': 'Faites-vous le sablage d\'escaliers?',
+    'faq.a8': 'Oui, nous offrons le sablage d\'escaliers en bois. Ce service demande une attention particulière que notre équipe maîtrise parfaitement.',
+
+    // Footer
+    'footer.quote': 'Soumission Gratuite',
+    'footer.hours': 'Heures d\'ouverture',
+    'footer.hours.weekday': 'Lundi - Vendredi: 8h - 18h',
+    'footer.hours.weekend': 'Samedi: 9h - 15h',
+    'footer.contact': 'Coordonnées',
+    'footer.links': 'Liens Rapides',
+    'footer.rights': 'Tous droits réservés.',
+  },
+  en: {
+    // Navigation
+    'nav.services': 'Services',
+    'nav.why': 'Why Us',
+    'nav.process': 'Process',
+    'nav.gallery': 'Gallery',
+    'nav.testimonials': 'Testimonials',
+    'nav.faq': 'FAQ',
+    'nav.contact': 'Contact',
+    'nav.quote': 'Free Quote',
+
+    // Hero
+    'hero.title': 'Floor Sanding Experts',
+    'hero.subtitle': 'Montreal and Surrounding Areas',
+    'hero.description': 'Bring your hardwood floors back to life with our professional sanding service. Superior quality, impeccable results.',
+    'hero.cta.quote': 'Request a Quote',
+    'hero.cta.call': 'Call Us',
+
+    // Form
+    'form.title': 'Free Quote',
+    'form.subtitle': 'Get your no-obligation estimate',
+    'form.firstName': 'First Name',
+    'form.lastName': 'Last Name',
+    'form.phone': 'Phone',
+    'form.email': 'Email',
+    'form.city': 'City / Area',
+    'form.serviceType': 'Service Type',
+    'form.serviceType.floor': 'Floor Sanding',
+    'form.serviceType.stairs': 'Stair Sanding',
+    'form.serviceType.repair': 'Floor Repair',
+    'form.woodType': 'Wood Type (optional)',
+    'form.area': 'Approximate Area (sq ft)',
+    'form.date': 'Preferred Date (optional)',
+    'form.message': 'Message / Details',
+    'form.consent': 'I agree to be contacted regarding my quote request.',
+    'form.submit': 'Submit Request',
+    'form.success': 'Thank you! Your request has been sent successfully. We will contact you shortly.',
+    'form.required': 'This field is required',
+    'form.invalidEmail': 'Invalid email',
+    'form.invalidPhone': 'Invalid phone number',
+
+    // Services
+    'services.title': 'Our Services',
+    'services.subtitle': 'Professional solutions for your hardwood floors',
+    'services.floor.title': 'Floor Sanding',
+    'services.floor.description': 'Restore the natural beauty of your hardwood floors. Our team uses professional techniques for a flawless finish.',
+    'services.floor.benefits': 'Removal of scratches and imperfections • Custom stain application • Durable and resistant finish',
+    'services.stairs.title': 'Stair Sanding',
+    'services.stairs.description': 'Transform your wooden stairs with professional sanding. Each step receives special attention.',
+    'services.stairs.benefits': 'Meticulous work on each step • Harmonization with your floors • Non-slip finish available',
+    'services.repair.title': 'Floor Repair',
+    'services.repair.description': 'Repair damage, replace damaged boards and correct imperfections before sanding.',
+    'services.repair.benefits': 'Replacement of damaged boards • Correction of warped planks • Repair of joints and cracks',
+    'services.cta': 'Request a Quote',
+
+    // Why Us
+    'why.title': 'Why Choose Us',
+    'why.subtitle': 'Excellence at the service of your floors',
+    'why.quality.title': 'Superior Quality',
+    'why.quality.description': 'We use professional equipment and high-quality products for lasting results.',
+    'why.detail.title': 'Attention to Detail',
+    'why.detail.description': 'Every project receives meticulous attention, from corners to edges, for a perfect finish.',
+    'why.timing.title': 'On-Time Delivery',
+    'why.timing.description': 'We respect agreed timelines and keep you informed at every step.',
+    'why.transparency.title': 'Transparency',
+    'why.transparency.description': 'Clear pricing, no surprises. You know exactly what you are paying for.',
+    'why.satisfaction.title': 'Satisfaction Guaranteed',
+    'why.satisfaction.description': 'Your satisfaction is our priority. We do not leave until you are satisfied.',
+    'why.experience.title': 'Proven Experience',
+    'why.experience.description': 'Years of expertise in floor sanding in Montreal and surrounding areas.',
+
+    // Process
+    'process.title': 'Our Process',
+    'process.subtitle': 'Methodical work for impeccable results',
+    'process.step1.title': 'Evaluation',
+    'process.step1.description': 'Free visit to assess the condition of your floors and establish a personalized work plan.',
+    'process.step2.title': 'Preparation',
+    'process.step2.description': 'Protection of walls, furniture and surface preparation for sanding.',
+    'process.step3.title': 'Sanding',
+    'process.step3.description': 'Professional sanding in multiple passes for a perfectly smooth surface.',
+    'process.step4.title': 'Finishing',
+    'process.step4.description': 'Application of stain (if desired) and high-quality protective varnish.',
+    'process.step5.title': 'Inspection',
+    'process.step5.description': 'Final verification with you to ensure your complete satisfaction.',
+
+    // Gallery
+    'gallery.title': 'Gallery',
+    'gallery.subtitle': 'Discover our achievements',
+    'gallery.before': 'Before',
+    'gallery.after': 'After',
+
+    // Testimonials
+    'testimonials.title': 'Testimonials',
+    'testimonials.subtitle': 'What our clients say',
+
+    // Areas
+    'areas.title': 'Service Areas',
+    'areas.subtitle': 'We cover Montreal and surrounding areas',
+    'areas.description': 'Our team travels throughout the greater Montreal area to offer you quality service.',
+
+    // FAQ
+    'faq.title': 'Frequently Asked Questions',
+    'faq.subtitle': 'Everything you need to know',
+    'faq.q1': 'How long does floor sanding take?',
+    'faq.a1': 'Generally, floor sanding takes 2 to 4 days depending on the area and condition of the floor. This includes drying time between coats of varnish.',
+    'faq.q2': 'How should I prepare my home before sanding?',
+    'faq.a2': 'We recommend removing furniture and objects from the room. We take care of protecting walls and adjacent areas.',
+    'faq.q3': 'Is there an odor after sanding?',
+    'faq.a3': 'A slight varnish odor may persist for a few days. We recommend good ventilation. Our products are low VOC emission.',
+    'faq.q4': 'How long before I can walk on the floor?',
+    'faq.a4': 'Generally, you can walk gently on the floor after 24 hours. Full cure time is approximately 7 days.',
+    'faq.q5': 'Do you offer a warranty on your work?',
+    'faq.a5': 'Yes, we offer a warranty on all our work. Details will be provided with the quote.',
+    'faq.q6': 'When is the best time to have my floor sanded?',
+    'faq.a6': 'Sanding can be done year-round. However, spring and fall are ideal as humidity is moderate.',
+    'faq.q7': 'Can I change the color of my floor?',
+    'faq.a7': 'Absolutely! After sanding, we can apply a stain of your choice before the finish coat.',
+    'faq.q8': 'Do you sand stairs?',
+    'faq.a8': 'Yes, we offer wood stair sanding. This service requires special attention that our team has mastered.',
+
+    // Footer
+    'footer.quote': 'Free Quote',
+    'footer.hours': 'Business Hours',
+    'footer.hours.weekday': 'Monday - Friday: 8am - 6pm',
+    'footer.hours.weekend': 'Saturday: 9am - 3pm',
+    'footer.contact': 'Contact Info',
+    'footer.links': 'Quick Links',
+    'footer.rights': 'All rights reserved.',
+  },
+};
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+  const [language, setLanguage] = useState<Language>('fr');
+
+  const t = (key: string): string => {
+    return translations[language][key] || key;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
