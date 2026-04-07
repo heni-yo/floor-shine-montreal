@@ -24,23 +24,15 @@ const Areas = () => {
         </div>
 
         {/* Areas Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {areas.map((area, index) => (
-            <div key={index} className="card-wood">
-              <div className="flex items-center gap-2 mb-4">
+            <div key={index} className="card-wood text-center">
+              <div className="flex items-center justify-center gap-2">
                 <MapPin className="w-5 h-5 text-primary" />
                 <h3 className="font-serif text-xl font-bold text-foreground">
                   {area.name}
                 </h3>
               </div>
-              <ul className="space-y-2">
-                {area.neighborhoods.map((neighborhood, i) => (
-                  <li key={i} className="text-muted-foreground text-sm flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-primary" />
-                    {neighborhood}
-                  </li>
-                ))}
-              </ul>
             </div>
           ))}
         </div>
