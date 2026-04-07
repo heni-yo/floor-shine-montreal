@@ -53,7 +53,7 @@ const Footer = () => {
                   <span className="text-primary-foreground font-serif font-bold text-xl">S</span>
                 </div>
                 <span className="font-serif font-semibold text-lg">
-                  Sablage Pro MTL
+                  TALON PLANCHER
                 </span>
               </div>
               <p className="text-accent-foreground/70 text-sm">
@@ -129,7 +129,7 @@ const Footer = () => {
       <div className="border-t border-accent-foreground/10">
         <div className="container-custom py-6 px-4">
           <p className="text-center text-accent-foreground/50 text-sm">
-            © {currentYear} Sablage Pro MTL. {t('footer.rights')}
+            © {currentYear} TALON PLANCHER. {t('footer.rights')}
           </p>
         </div>
       </div>
