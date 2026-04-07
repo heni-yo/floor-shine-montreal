@@ -49,7 +49,7 @@ const translations: Record<Language, Record<string, string>> = {
     'form.wantColor': 'Désirez-vous mettre une couleur sur votre plancher?',
     'form.floorType.label': 'Type de plancher',
     'form.floorType.prefinished': 'Plancher préverni (jamais sablé, traité en usine)',
-    'form.floorType.regular': 'Plancher régulier',
+    'form.floorType.regular': 'Plancher régulier (chêne, érable, merisier, parqueterie, etc.)',
     'form.floorType.note': 'Plancher préverni = plancher jamais sablé et déjà traité en usine.',
     'form.stair.detailsLabel': 'Détails de l\'escalier',
     'form.stair.marches': 'Nombre de marches',
