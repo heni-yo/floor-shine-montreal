@@ -203,7 +203,7 @@ const translations: Record<Language, Record<string, string>> = {
     'form.colorNo': 'No',
     'form.floorType.label': 'Floor Type',
     'form.floorType.prefinished': 'Prefinished floor (never sanded, factory treated)',
-    'form.floorType.regular': 'Regular floor',
+    'form.floorType.regular': 'Regular floor (oak, maple, birch, parquetry, etc.)',
     'form.floorType.note': 'Prefinished floor = floor never sanded and already factory treated.',
     'form.stair.detailsLabel': 'Stair Details',
     'form.stair.marches': 'Number of treads',
