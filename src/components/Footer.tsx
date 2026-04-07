@@ -129,7 +129,7 @@ const Footer = () => {
       <div className="border-t border-accent-foreground/10">
         <div className="container-custom py-6 px-4">
           <p className="text-center text-accent-foreground/50 text-sm">
-            © {currentYear} Sablage Pro MTL. {t('footer.rights')}
+            © {currentYear} TALON PLANCHER. {t('footer.rights')}
           </p>
         </div>
       </div>

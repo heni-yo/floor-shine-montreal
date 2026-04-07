@@ -30,10 +30,10 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-serif font-bold text-xl">S</span>
+              <span className="text-primary-foreground font-serif font-bold text-xl">T</span>
             </div>
             <span className="font-serif font-semibold text-lg text-foreground hidden sm:block">
-              Sablage Pro MTL
+              TALON PLANCHER
             </span>
           </div>
 
