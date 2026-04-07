@@ -61,8 +61,6 @@ const translations: Record<Language, Record<string, string>> = {
     'form.stair.mainCourante': 'Nombre de pieds carrés main courante',
     'form.colorYes': 'Oui',
     'form.colorNo': 'Non',
-    'form.stairSteps': 'Veuillez indiquer le nombre de dessus de marches',
-    'form.stairStepsHelper': '*Si Escalier',
     'form.photos': 'Veuillez inclure les photos de votre plancher afin que l\'on puisse vous offrir une estimation rapide et précise',
     'form.photosMax': '10 max',
     'form.specialNeeds': 'Veuillez décrire vos besoins particuliers s\'il y a lieu',
