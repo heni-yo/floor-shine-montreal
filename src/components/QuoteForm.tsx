@@ -249,12 +249,12 @@ const QuoteForm = () => {
                     <Label className="text-sm font-medium">{t('form.floorType.label')}</Label>
                     <RadioGroup value={formData.floorType} onValueChange={(value) => setFormData(prev => ({ ...prev, floorType: value }))} className="space-y-2">
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="prefinished" id="floor-prefinished" />
-                        <Label htmlFor="floor-prefinished" className="font-normal cursor-pointer">{t('form.floorType.prefinished')}</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
                         <RadioGroupItem value="regular" id="floor-regular" />
                         <Label htmlFor="floor-regular" className="font-normal cursor-pointer">{t('form.floorType.regular')}</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="prefinished" id="floor-prefinished" />
+                        <Label htmlFor="floor-prefinished" className="font-normal cursor-pointer">{t('form.floorType.prefinished')}</Label>
                       </div>
                     </RadioGroup>
                     <p className="text-xs text-muted-foreground italic">{t('form.floorType.note')}</p>
