@@ -53,7 +53,7 @@ const Footer = () => {
                   <span className="text-primary-foreground font-serif font-bold text-xl">S</span>
                 </div>
                 <span className="font-serif font-semibold text-lg">
-                  Sablage Pro MTL
+                  TALON PLANCHER
                 </span>
               </div>
               <p className="text-accent-foreground/70 text-sm">
