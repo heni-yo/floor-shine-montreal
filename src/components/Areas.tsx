@@ -5,10 +5,9 @@ const Areas = () => {
   const { t } = useLanguage();
 
   const areas = [
-    { name: 'Montréal', neighborhoods: ['Plateau', 'Rosemont', 'Hochelaga', 'Villeray', 'NDG', 'Verdun', 'LaSalle', 'Ahuntsic'] },
-    { name: 'Laval', neighborhoods: ['Chomedey', 'Sainte-Rose', 'Vimont', 'Duvernay', 'Fabreville'] },
-    { name: 'Rive-Sud', neighborhoods: ['Longueuil', 'Brossard', 'Saint-Lambert', 'Boucherville', 'La Prairie'] },
-    { name: 'Rive-Nord', neighborhoods: ['Terrebonne', 'Repentigny', 'Mascouche', 'Blainville', 'Boisbriand'] },
+    { name: 'Montréal' },
+    { name: 'Rive-Sud' },
+    { name: 'Rive-Nord' },
   ];
 
   return (
