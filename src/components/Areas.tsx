@@ -5,10 +5,9 @@ const Areas = () => {
   const { t } = useLanguage();
 
   const areas = [
-    { name: 'Montréal', neighborhoods: ['Plateau', 'Rosemont', 'Hochelaga', 'Villeray', 'NDG', 'Verdun', 'LaSalle', 'Ahuntsic'] },
-    { name: 'Laval', neighborhoods: ['Chomedey', 'Sainte-Rose', 'Vimont', 'Duvernay', 'Fabreville'] },
-    { name: 'Rive-Sud', neighborhoods: ['Longueuil', 'Brossard', 'Saint-Lambert', 'Boucherville', 'La Prairie'] },
-    { name: 'Rive-Nord', neighborhoods: ['Terrebonne', 'Repentigny', 'Mascouche', 'Blainville', 'Boisbriand'] },
+    { name: 'Montréal' },
+    { name: 'Rive-Sud' },
+    { name: 'Rive-Nord' },
   ];
 
   return (
@@ -25,23 +24,15 @@ const Areas = () => {
         </div>
 
         {/* Areas Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {areas.map((area, index) => (
-            <div key={index} className="card-wood">
-              <div className="flex items-center gap-2 mb-4">
+            <div key={index} className="card-wood text-center">
+              <div className="flex items-center justify-center gap-2">
                 <MapPin className="w-5 h-5 text-primary" />
                 <h3 className="font-serif text-xl font-bold text-foreground">
                   {area.name}
                 </h3>
               </div>
-              <ul className="space-y-2">
-                {area.neighborhoods.map((neighborhood, i) => (
-                  <li key={i} className="text-muted-foreground text-sm flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-primary" />
-                    {neighborhood}
-                  </li>
-                ))}
-              </ul>
             </div>
           ))}
         </div>
