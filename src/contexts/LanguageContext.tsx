@@ -190,7 +190,7 @@ const translations: Record<Language, Record<string, string>> = {
     'form.postalCode': 'Postal Code',
     'form.city': 'City',
     'form.servicesTitle': 'Choose the desired service(s)',
-    'form.service.floor': 'Floor Sanding',
+    'form.service.floor': 'Floor Sanding (oak, maple, birch, parquetry, etc.)',
     'form.service.stairs': 'Stair Sanding',
     'form.service.repair': 'Floor Repair',
     'form.date': 'Desired Work Date',
