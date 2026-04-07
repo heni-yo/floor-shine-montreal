@@ -38,7 +38,7 @@ const translations: Record<Language, Record<string, string>> = {
     'form.postalCode': 'Code Postal',
     'form.city': 'Ville',
     'form.servicesTitle': 'Choisissez le(s) service(s) désiré(s)',
-    'form.service.floor': 'Sablage de plancher',
+    'form.service.floor': 'Sablage de plancher (chêne, érable, merisier, parqueterie, etc.)',
     'form.service.stairs': 'Sablage d\'escalier',
     'form.service.repair': 'Réparation de plancher',
     'form.date': 'Date des travaux désirés',
