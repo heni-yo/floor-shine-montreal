@@ -136,8 +136,8 @@ const translations: Record<Language, Record<string, string>> = {
     'areas.description': 'Notre équipe de sablage de plancher se déplace à Montréal, sur la Rive-Sud et la Rive-Nord pour vous offrir un service professionnel.',
 
     // FAQ
-    'faq.title': 'Questions Fréquentes',
-    'faq.subtitle': 'Tout ce que vous devez savoir',
+    'faq.title': 'Questions Fréquentes sur le Sablage de Plancher',
+    'faq.subtitle': 'Tout ce que vous devez savoir sur le sablage de plancher à Montréal',
     'faq.q1': 'Combien de temps dure le sablage d\'un plancher?',
     'faq.a1': 'En général, le sablage d\'un plancher prend de 2 à 4 jours selon la superficie et l\'état du plancher. Cela inclut le temps de séchage entre les couches de vernis.',
     'faq.q2': 'Comment préparer ma maison avant le sablage?',
