@@ -121,8 +121,8 @@ const translations: Record<Language, Record<string, string>> = {
     'process.step5.description': 'Vérification finale avec vous pour s\'assurer de votre entière satisfaction.',
 
     // Gallery
-    'gallery.title': 'Galerie',
-    'gallery.subtitle': 'Découvrez nos réalisations',
+    'gallery.title': 'Nos Réalisations en Sablage de Plancher',
+    'gallery.subtitle': 'Découvrez nos projets de sablage de plancher à Montréal',
     'gallery.before': 'Avant',
     'gallery.after': 'Après',
 
