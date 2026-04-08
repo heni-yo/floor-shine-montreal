@@ -295,8 +295,8 @@ const translations: Record<Language, Record<string, string>> = {
     'areas.description': 'Our floor sanding team serves Montreal, the South Shore and the North Shore with professional service.',
 
     // FAQ
-    'faq.title': 'Frequently Asked Questions',
-    'faq.subtitle': 'Everything you need to know',
+    'faq.title': 'Floor Sanding FAQ',
+    'faq.subtitle': 'Everything you need to know about floor sanding in Montreal',
     'faq.q1': 'How long does floor sanding take?',
     'faq.a1': 'Generally, floor sanding takes 2 to 4 days depending on the area and condition of the floor. This includes drying time between coats of varnish.',
     'faq.q2': 'How should I prepare my home before sanding?',
