@@ -57,7 +57,7 @@ const Hero = () => {
             </button>
             
             <a 
-              href="tel:+15141234567"
+              href="tel:+15142334083"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white/30 text-white rounded-md font-semibold hover:bg-white/10 transition-all duration-300"
             >
               <Phone className="w-5 h-5" />

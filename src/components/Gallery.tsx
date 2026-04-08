@@ -113,7 +113,7 @@ const Gallery = () => {
                   >
                     <img
                       src={src}
-                      alt={`${t('gallery.title')} ${index + 1}`}
+                      alt={`Sablage de plancher Montréal – Réalisation TALON PLANCHER ${index + 1}`}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-105"
                       loading="lazy"
                     />

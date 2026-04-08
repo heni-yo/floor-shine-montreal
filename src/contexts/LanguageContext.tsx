@@ -21,9 +21,9 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.quote': 'Soumission gratuite',
 
     // Hero
-    'hero.title': 'Experts en Sablage de Plancher',
-    'hero.subtitle': 'Montréal et environs',
-    'hero.description': 'Redonnez vie à vos planchers de bois avec notre service professionnel de sablage. Qualité supérieure, résultats impeccables.',
+    'hero.title': 'Sablage de Plancher à Montréal',
+    'hero.subtitle': 'Montréal · Rive-Sud · Rive-Nord',
+    'hero.description': 'Redonnez vie à vos planchers de bois franc avec notre service professionnel de sablage de plancher à Montréal. Qualité supérieure, résultats impeccables, soumission gratuite.',
     'hero.cta.quote': 'Demander une soumission',
     'hero.cta.call': 'Appelez-nous',
 
@@ -77,34 +77,34 @@ const translations: Record<Language, Record<string, string>> = {
     'form.selectService': 'Veuillez sélectionner au moins un service',
 
     // Services
-    'services.title': 'Nos Services',
-    'services.subtitle': 'Des solutions professionnelles pour vos planchers de bois',
+    'services.title': 'Services de Sablage de Plancher à Montréal',
+    'services.subtitle': 'Des solutions professionnelles de sablage, finition et réparation de planchers de bois franc',
     'services.floor.title': 'Sablage de Plancher',
-    'services.floor.description': 'Restaurez la beauté naturelle de vos planchers de bois franc. Notre équipe utilise des techniques professionnelles pour un fini impeccable.',
+    'services.floor.description': 'Restaurez la beauté naturelle de vos planchers de bois franc à Montréal. Notre équipe utilise des techniques professionnelles de sablage pour un fini impeccable dans votre maison.',
     'services.floor.benefits': 'Enlèvement des rayures et imperfections • Application de teinture sur mesure • Finition durable et résistante',
     'services.stairs.title': 'Sablage d\'Escalier',
-    'services.stairs.description': 'Transformez vos escaliers en bois avec un sablage professionnel. Chaque marche reçoit une attention particulière.',
+    'services.stairs.description': 'Transformez vos escaliers en bois avec un sablage professionnel à Montréal. Chaque marche reçoit une attention particulière pour un résultat harmonieux.',
     'services.stairs.benefits': 'Travail minutieux sur chaque marche • Harmonisation avec vos planchers • Finition antidérapante disponible',
     'services.repair.title': 'Réparation de Planchers',
-    'services.repair.description': 'Réparez les dommages, remplacez les lattes abîmées et corrigez les imperfections avant le sablage.',
+    'services.repair.description': 'Service de réparation de planchers de bois à Montréal. Remplacement de lattes abîmées, correction des imperfections avant le sablage.',
     'services.repair.benefits': 'Remplacement de lattes endommagées • Correction des planches gondolées • Réparation des joints et fissures',
     'services.cta': 'Demander une soumission',
 
     // Why Us
-    'why.title': 'Pourquoi Nous Choisir',
-    'why.subtitle': 'L\'excellence au service de vos planchers',
+    'why.title': 'Pourquoi Choisir TALON PLANCHER à Montréal',
+    'why.subtitle': 'L\'excellence au service de vos planchers de bois franc',
     'why.quality.title': 'Qualité Supérieure',
-    'why.quality.description': 'Nous utilisons des équipements professionnels et des produits de haute qualité pour des résultats durables.',
+    'why.quality.description': 'Nous utilisons des équipements professionnels de sablage et des produits de haute qualité pour des résultats durables sur vos planchers.',
     'why.detail.title': 'Souci du Détail',
-    'why.detail.description': 'Chaque projet reçoit une attention minutieuse, des coins aux bordures, pour un fini parfait.',
+    'why.detail.description': 'Chaque projet de sablage de plancher reçoit une attention minutieuse, des coins aux bordures, pour un fini parfait.',
     'why.timing.title': 'Respect des Délais',
-    'why.timing.description': 'Nous respectons les échéanciers convenus et vous tenons informés à chaque étape.',
-    'why.transparency.title': 'Transparence',
-    'why.transparency.description': 'Prix clairs, sans surprise. Vous savez exactement ce que vous payez.',
+    'why.timing.description': 'Nous respectons les échéanciers convenus pour votre projet de sablage à Montréal et vous tenons informés à chaque étape.',
+    'why.transparency.title': 'Soumission Transparente',
+    'why.transparency.description': 'Prix clairs, sans surprise. Vous savez exactement ce que vous payez pour votre sablage de plancher.',
     'why.satisfaction.title': 'Satisfaction Garantie',
-    'why.satisfaction.description': 'Votre satisfaction est notre priorité. Nous ne partons pas tant que vous n\'êtes pas satisfait.',
-    'why.experience.title': 'Expérience Prouvée',
-    'why.experience.description': 'Des années d\'expertise dans le sablage de planchers à Montréal et ses environs.',
+    'why.satisfaction.description': 'Votre satisfaction est notre priorité. Nous ne partons pas tant que vous n\'êtes pas satisfait du résultat.',
+    'why.experience.title': 'Expérience à Montréal',
+    'why.experience.description': 'Des années d\'expertise en sablage de planchers à Montréal, Rive-Sud et Rive-Nord.',
 
     // Process
     'process.title': 'Notre Processus',
@@ -121,8 +121,8 @@ const translations: Record<Language, Record<string, string>> = {
     'process.step5.description': 'Vérification finale avec vous pour s\'assurer de votre entière satisfaction.',
 
     // Gallery
-    'gallery.title': 'Galerie',
-    'gallery.subtitle': 'Découvrez nos réalisations',
+    'gallery.title': 'Nos Réalisations en Sablage de Plancher',
+    'gallery.subtitle': 'Découvrez nos projets de sablage de plancher à Montréal',
     'gallery.before': 'Avant',
     'gallery.after': 'Après',
 
@@ -131,13 +131,13 @@ const translations: Record<Language, Record<string, string>> = {
     'testimonials.subtitle': 'Ce que nos clients disent',
 
     // Areas
-    'areas.title': 'Zones Desservies',
-    'areas.subtitle': 'Nous couvrons Montréal et ses environs',
-    'areas.description': 'Notre équipe se déplace dans toute la grande région de Montréal pour vous offrir un service de qualité.',
+    'areas.title': 'Zones Desservies à Montréal',
+    'areas.subtitle': 'Sablage de plancher à Montréal et ses environs',
+    'areas.description': 'Notre équipe de sablage de plancher se déplace à Montréal, sur la Rive-Sud et la Rive-Nord pour vous offrir un service professionnel.',
 
     // FAQ
-    'faq.title': 'Questions Fréquentes',
-    'faq.subtitle': 'Tout ce que vous devez savoir',
+    'faq.title': 'Questions Fréquentes sur le Sablage de Plancher',
+    'faq.subtitle': 'Tout ce que vous devez savoir sur le sablage de plancher à Montréal',
     'faq.q1': 'Combien de temps dure le sablage d\'un plancher?',
     'faq.a1': 'En général, le sablage d\'un plancher prend de 2 à 4 jours selon la superficie et l\'état du plancher. Cela inclut le temps de séchage entre les couches de vernis.',
     'faq.q2': 'Comment préparer ma maison avant le sablage?',
@@ -157,9 +157,13 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Footer
     'footer.quote': 'Soumission Gratuite',
-    'footer.hours': 'Heures d\'ouverture',
-    'footer.hours.weekday': 'Lundi - Vendredi: 8h - 18h',
-    'footer.hours.weekend': 'Samedi: 9h - 15h',
+    'footer.cta.description': 'Obtenez une estimation gratuite pour votre projet de sablage de plancher à Montréal.',
+    'footer.brand.description': 'TALON PLANCHER – Experts en sablage de plancher, sablage d\'escalier et réparation de planchers de bois franc à Montréal, Rive-Sud et Rive-Nord.',
+    'footer.trust.title': 'Pourquoi nous faire confiance',
+    'footer.trust.1': 'Soumission gratuite et sans engagement',
+    'footer.trust.2': 'Équipement professionnel de qualité supérieure',
+    'footer.trust.3': 'Satisfaction garantie sur tous nos travaux',
+    'footer.trust.4': 'Service rapide à Montréal et environs',
     'footer.contact': 'Coordonnées',
     'footer.links': 'Liens Rapides',
     'footer.rights': 'Tous droits réservés.',
@@ -176,9 +180,9 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.quote': 'Free Quote',
 
     // Hero
-    'hero.title': 'Floor Sanding Experts',
-    'hero.subtitle': 'Montreal and Surrounding Areas',
-    'hero.description': 'Bring your hardwood floors back to life with our professional sanding service. Superior quality, impeccable results.',
+    'hero.title': 'Floor Sanding in Montreal',
+    'hero.subtitle': 'Montreal · South Shore · North Shore',
+    'hero.description': 'Bring your hardwood floors back to life with our professional floor sanding service in Montreal. Superior quality, impeccable results, free quote.',
     'hero.cta.quote': 'Request a Quote',
     'hero.cta.call': 'Call Us',
 
@@ -232,34 +236,34 @@ const translations: Record<Language, Record<string, string>> = {
     'form.selectService': 'Please select at least one service',
 
     // Services
-    'services.title': 'Our Services',
-    'services.subtitle': 'Professional solutions for your hardwood floors',
+    'services.title': 'Floor Sanding Services in Montreal',
+    'services.subtitle': 'Professional sanding, finishing and hardwood floor repair solutions',
     'services.floor.title': 'Floor Sanding',
-    'services.floor.description': 'Restore the natural beauty of your hardwood floors. Our team uses professional techniques for a flawless finish.',
+    'services.floor.description': 'Restore the natural beauty of your hardwood floors in Montreal. Our team uses professional sanding techniques for a flawless finish in your home.',
     'services.floor.benefits': 'Removal of scratches and imperfections • Custom stain application • Durable and resistant finish',
     'services.stairs.title': 'Stair Sanding',
-    'services.stairs.description': 'Transform your wooden stairs with professional sanding. Each step receives special attention.',
+    'services.stairs.description': 'Transform your wooden stairs with professional sanding in Montreal. Each step receives special attention for a harmonious result.',
     'services.stairs.benefits': 'Meticulous work on each step • Harmonization with your floors • Non-slip finish available',
     'services.repair.title': 'Floor Repair',
-    'services.repair.description': 'Repair damage, replace damaged boards and correct imperfections before sanding.',
+    'services.repair.description': 'Professional hardwood floor repair service in Montreal. Replace damaged boards and correct imperfections before sanding.',
     'services.repair.benefits': 'Replacement of damaged boards • Correction of warped planks • Repair of joints and cracks',
     'services.cta': 'Request a Quote',
 
     // Why Us
-    'why.title': 'Why Choose Us',
-    'why.subtitle': 'Excellence at the service of your floors',
+    'why.title': 'Why Choose TALON PLANCHER in Montreal',
+    'why.subtitle': 'Excellence at the service of your hardwood floors',
     'why.quality.title': 'Superior Quality',
-    'why.quality.description': 'We use professional equipment and high-quality products for lasting results.',
+    'why.quality.description': 'We use professional sanding equipment and high-quality products for lasting results on your floors.',
     'why.detail.title': 'Attention to Detail',
-    'why.detail.description': 'Every project receives meticulous attention, from corners to edges, for a perfect finish.',
+    'why.detail.description': 'Every floor sanding project receives meticulous attention, from corners to edges, for a perfect finish.',
     'why.timing.title': 'On-Time Delivery',
-    'why.timing.description': 'We respect agreed timelines and keep you informed at every step.',
-    'why.transparency.title': 'Transparency',
-    'why.transparency.description': 'Clear pricing, no surprises. You know exactly what you are paying for.',
+    'why.timing.description': 'We respect agreed timelines for your sanding project in Montreal and keep you informed at every step.',
+    'why.transparency.title': 'Transparent Quotes',
+    'why.transparency.description': 'Clear pricing, no surprises. You know exactly what you are paying for your floor sanding.',
     'why.satisfaction.title': 'Satisfaction Guaranteed',
-    'why.satisfaction.description': 'Your satisfaction is our priority. We do not leave until you are satisfied.',
-    'why.experience.title': 'Proven Experience',
-    'why.experience.description': 'Years of expertise in floor sanding in Montreal and surrounding areas.',
+    'why.satisfaction.description': 'Your satisfaction is our priority. We do not leave until you are satisfied with the result.',
+    'why.experience.title': 'Montreal Experience',
+    'why.experience.description': 'Years of expertise in floor sanding in Montreal, South Shore and North Shore.',
 
     // Process
     'process.title': 'Our Process',
@@ -276,8 +280,8 @@ const translations: Record<Language, Record<string, string>> = {
     'process.step5.description': 'Final verification with you to ensure your complete satisfaction.',
 
     // Gallery
-    'gallery.title': 'Gallery',
-    'gallery.subtitle': 'Discover our achievements',
+    'gallery.title': 'Our Floor Sanding Projects',
+    'gallery.subtitle': 'Discover our floor sanding projects in Montreal',
     'gallery.before': 'Before',
     'gallery.after': 'After',
 
@@ -286,13 +290,13 @@ const translations: Record<Language, Record<string, string>> = {
     'testimonials.subtitle': 'What our clients say',
 
     // Areas
-    'areas.title': 'Service Areas',
-    'areas.subtitle': 'We cover Montreal and surrounding areas',
-    'areas.description': 'Our team travels throughout the greater Montreal area to offer you quality service.',
+    'areas.title': 'Service Areas in Montreal',
+    'areas.subtitle': 'Floor sanding in Montreal and surrounding areas',
+    'areas.description': 'Our floor sanding team serves Montreal, the South Shore and the North Shore with professional service.',
 
     // FAQ
-    'faq.title': 'Frequently Asked Questions',
-    'faq.subtitle': 'Everything you need to know',
+    'faq.title': 'Floor Sanding FAQ',
+    'faq.subtitle': 'Everything you need to know about floor sanding in Montreal',
     'faq.q1': 'How long does floor sanding take?',
     'faq.a1': 'Generally, floor sanding takes 2 to 4 days depending on the area and condition of the floor. This includes drying time between coats of varnish.',
     'faq.q2': 'How should I prepare my home before sanding?',
@@ -312,9 +316,13 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Footer
     'footer.quote': 'Free Quote',
-    'footer.hours': 'Business Hours',
-    'footer.hours.weekday': 'Monday - Friday: 8am - 6pm',
-    'footer.hours.weekend': 'Saturday: 9am - 3pm',
+    'footer.cta.description': 'Get a free estimate for your floor sanding project in Montreal.',
+    'footer.brand.description': 'TALON PLANCHER – Experts in floor sanding, stair sanding and hardwood floor repair in Montreal, South Shore and North Shore.',
+    'footer.trust.title': 'Why trust us',
+    'footer.trust.1': 'Free no-obligation quote',
+    'footer.trust.2': 'Professional high-quality equipment',
+    'footer.trust.3': 'Satisfaction guaranteed on all work',
+    'footer.trust.4': 'Fast service in Montreal and area',
     'footer.contact': 'Contact Info',
     'footer.links': 'Quick Links',
     'footer.rights': 'All rights reserved.',
