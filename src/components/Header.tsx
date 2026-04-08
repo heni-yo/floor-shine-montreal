@@ -28,14 +28,21 @@ const Header = () => {
       <div className="container-custom">
         <div className="flex items-center justify-between h-16 md:h-20 px-4">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-serif font-bold text-xl">T</span>
-            </div>
-            <span className="font-serif font-semibold text-lg text-foreground hidden sm:block">
-              TALON PLANCHER
-            </span>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              setIsMenuOpen(false);
+            }}
+            className="flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+            aria-label="Talon Plancher — accueil"
+          >
+            <img
+              src="/logo.svg"
+              alt="Talon Plancher"
+              className="h-9 w-auto max-h-10 md:h-10 max-w-[min(100vw-8rem,220px)] object-contain object-left"
+            />
+          </button>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-6">

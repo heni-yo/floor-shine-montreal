@@ -48,14 +48,11 @@ const Footer = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                  <span className="text-primary-foreground font-serif font-bold text-xl">S</span>
-                </div>
-                <span className="font-serif font-semibold text-lg">
-                  TALON PLANCHER
-                </span>
-              </div>
+              <img
+                src="/logo.svg"
+                alt="Talon Plancher"
+                className="h-12 w-auto max-w-[240px] object-contain object-left mb-4"
+              />
               <p className="text-accent-foreground/70 text-sm">
                 {t('hero.description')}
               </p>

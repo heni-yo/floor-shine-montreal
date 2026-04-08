@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { Send, CheckCircle, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { Send, CheckCircle, Upload, X, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,6 +48,7 @@ const QuoteForm = () => {
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -104,6 +106,9 @@ const QuoteForm = () => {
     if (!formData.services.floor && !formData.services.stairs && !formData.services.repair) {
       newErrors.services = t('form.selectService');
     }
+    if (formData.services.floor && !formData.floorType) {
+      newErrors.floorType = t('form.required');
+    }
     if (!formData.date) newErrors.date = t('form.required');
     if (!formData.area.trim()) newErrors.area = t('form.required');
 
@@ -111,11 +116,55 @@ const QuoteForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const buildPayload = () => ({
+    firstName: formData.firstName.trim(),
+    lastName: formData.lastName.trim(),
+    phone: formData.phone.trim(),
+    email: formData.email.trim(),
+    address: formData.address.trim(),
+    postalCode: formData.postalCode.trim(),
+    city: formData.city.trim(),
+    services: {
+      floor: formData.services.floor,
+      stairs: formData.services.stairs,
+      repair: formData.services.repair,
+    },
+    floorType: formData.floorType,
+    stairDetails: { ...formData.stairDetails },
+    date: formData.date,
+    details: formData.details,
+    area: formData.area.trim(),
+    wantColor: formData.wantColor,
+    specialNeeds: formData.specialNeeds,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log('Form submitted:', formData);
+    if (!validateForm() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    const apiBase = import.meta.env.VITE_API_URL ?? '';
+    const fd = new FormData();
+    fd.append('data', JSON.stringify(buildPayload()));
+    formData.photos.forEach((file) => fd.append('photos', file));
+
+    try {
+      const res = await fetch(`${apiBase}/api/quote`, {
+        method: 'POST',
+        body: fd,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg =
+          typeof json?.error?.message === 'string' ? json.error.message : t('form.errorServer');
+        toast.error(msg);
+        return;
+      }
       setIsSubmitted(true);
+    } catch {
+      toast.error(t('form.errorNetwork'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -137,10 +186,14 @@ const QuoteForm = () => {
   const handleServiceChange = (service: 'floor' | 'stairs' | 'repair', checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      services: { ...prev.services, [service]: checked }
+      services: { ...prev.services, [service]: checked },
+      ...(service === 'floor' && !checked ? { floorType: '' } : {}),
     }));
     if (errors.services) {
       setErrors(prev => { const n = { ...prev }; delete n.services; return n; });
+    }
+    if (service === 'floor' && !checked && errors.floorType) {
+      setErrors(prev => { const n = { ...prev }; delete n.floorType; return n; });
     }
   };
 
@@ -247,7 +300,19 @@ const QuoteForm = () => {
                 {formData.services.floor && (
                   <div className="ml-7 space-y-3 p-4 bg-muted/50 rounded-lg border border-border">
                     <Label className="text-sm font-medium">{t('form.floorType.label')}</Label>
-                    <RadioGroup value={formData.floorType} onValueChange={(value) => setFormData(prev => ({ ...prev, floorType: value }))} className="space-y-2">
+                    <RadioGroup
+                      value={formData.floorType}
+                      onValueChange={(value) => {
+                        setFormData(prev => ({ ...prev, floorType: value }));
+                        setErrors((prev) => {
+                          if (!prev.floorType) return prev;
+                          const next = { ...prev };
+                          delete next.floorType;
+                          return next;
+                        });
+                      }}
+                      className="space-y-2"
+                    >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="regular" id="floor-regular" />
                         <Label htmlFor="floor-regular" className="font-normal cursor-pointer">{t('form.floorType.regular')}</Label>
@@ -258,6 +323,7 @@ const QuoteForm = () => {
                       </div>
                     </RadioGroup>
                     <p className="text-xs text-muted-foreground italic">{t('form.floorType.note')}</p>
+                    {errors.floorType && <p className="text-destructive text-sm">{errors.floorType}</p>}
                   </div>
                 )}
 
@@ -365,9 +431,9 @@ const QuoteForm = () => {
             </div>
 
             {/* Submit */}
-            <Button type="submit" size="lg" className="w-full">
-              <Send className="w-5 h-5" />
-              {t('form.submit')}
+            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+              {isSubmitting ? t('form.submitting') : t('form.submit')}
             </Button>
           </form>
         </div>
