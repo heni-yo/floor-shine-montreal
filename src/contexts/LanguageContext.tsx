@@ -180,9 +180,9 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.quote': 'Free Quote',
 
     // Hero
-    'hero.title': 'Floor Sanding Experts',
-    'hero.subtitle': 'Montreal and Surrounding Areas',
-    'hero.description': 'Bring your hardwood floors back to life with our professional sanding service. Superior quality, impeccable results.',
+    'hero.title': 'Floor Sanding in Montreal',
+    'hero.subtitle': 'Montreal · South Shore · North Shore',
+    'hero.description': 'Bring your hardwood floors back to life with our professional floor sanding service in Montreal. Superior quality, impeccable results, free quote.',
     'hero.cta.quote': 'Request a Quote',
     'hero.cta.call': 'Call Us',
 
