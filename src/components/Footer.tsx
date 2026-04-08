@@ -49,10 +49,10 @@ const Footer = () => {
             {/* Brand */}
             <div>
               <img
-                src="/logo.svg"
+                src="/logofooter.svg"
                 alt="TALON PLANCHER – Sablage de plancher à Montréal"
-                className="h-12 w-auto max-w-[240px] object-contain object-left mb-4"
-              />
+                className="h-20 w-auto max-w-[280px] object-contain object-left mb-4"
+                />
               <p className="text-accent-foreground/70 text-sm">
                 {t('footer.brand.description')}
               </p>

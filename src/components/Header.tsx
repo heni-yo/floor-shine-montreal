@@ -38,9 +38,9 @@ const Header = () => {
             aria-label="Talon Plancher — accueil"
           >
             <img
-              src="/logo.svg"
+              src="/logoNav.svg"
               alt="Talon Plancher"
-              className="h-9 w-auto max-h-10 md:h-10 max-w-[min(100vw-8rem,220px)] object-contain object-left"
+              className="h-12 md:h-14 w-auto max-w-[260px] object-contain object-left"
             />
           </button>
 
