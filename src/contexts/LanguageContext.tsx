@@ -157,9 +157,13 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Footer
     'footer.quote': 'Soumission Gratuite',
-    'footer.hours': 'Heures d\'ouverture',
-    'footer.hours.weekday': 'Lundi - Vendredi: 8h - 18h',
-    'footer.hours.weekend': 'Samedi: 9h - 15h',
+    'footer.cta.description': 'Obtenez une estimation gratuite pour votre projet de sablage de plancher à Montréal.',
+    'footer.brand.description': 'TALON PLANCHER – Experts en sablage de plancher, sablage d\'escalier et réparation de planchers de bois franc à Montréal, Rive-Sud et Rive-Nord.',
+    'footer.trust.title': 'Pourquoi nous faire confiance',
+    'footer.trust.1': 'Soumission gratuite et sans engagement',
+    'footer.trust.2': 'Équipement professionnel de qualité supérieure',
+    'footer.trust.3': 'Satisfaction garantie sur tous nos travaux',
+    'footer.trust.4': 'Service rapide à Montréal et environs',
     'footer.contact': 'Coordonnées',
     'footer.links': 'Liens Rapides',
     'footer.rights': 'Tous droits réservés.',
