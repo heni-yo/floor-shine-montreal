@@ -77,16 +77,16 @@ const translations: Record<Language, Record<string, string>> = {
     'form.selectService': 'Veuillez sélectionner au moins un service',
 
     // Services
-    'services.title': 'Nos Services',
-    'services.subtitle': 'Des solutions professionnelles pour vos planchers de bois',
+    'services.title': 'Services de Sablage de Plancher à Montréal',
+    'services.subtitle': 'Des solutions professionnelles de sablage, finition et réparation de planchers de bois franc',
     'services.floor.title': 'Sablage de Plancher',
-    'services.floor.description': 'Restaurez la beauté naturelle de vos planchers de bois franc. Notre équipe utilise des techniques professionnelles pour un fini impeccable.',
+    'services.floor.description': 'Restaurez la beauté naturelle de vos planchers de bois franc à Montréal. Notre équipe utilise des techniques professionnelles de sablage pour un fini impeccable dans votre maison.',
     'services.floor.benefits': 'Enlèvement des rayures et imperfections • Application de teinture sur mesure • Finition durable et résistante',
     'services.stairs.title': 'Sablage d\'Escalier',
-    'services.stairs.description': 'Transformez vos escaliers en bois avec un sablage professionnel. Chaque marche reçoit une attention particulière.',
+    'services.stairs.description': 'Transformez vos escaliers en bois avec un sablage professionnel à Montréal. Chaque marche reçoit une attention particulière pour un résultat harmonieux.',
     'services.stairs.benefits': 'Travail minutieux sur chaque marche • Harmonisation avec vos planchers • Finition antidérapante disponible',
     'services.repair.title': 'Réparation de Planchers',
-    'services.repair.description': 'Réparez les dommages, remplacez les lattes abîmées et corrigez les imperfections avant le sablage.',
+    'services.repair.description': 'Service de réparation de planchers de bois à Montréal. Remplacement de lattes abîmées, correction des imperfections avant le sablage.',
     'services.repair.benefits': 'Remplacement de lattes endommagées • Correction des planches gondolées • Réparation des joints et fissures',
     'services.cta': 'Demander une soumission',
 
