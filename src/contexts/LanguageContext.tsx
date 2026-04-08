@@ -280,8 +280,8 @@ const translations: Record<Language, Record<string, string>> = {
     'process.step5.description': 'Final verification with you to ensure your complete satisfaction.',
 
     // Gallery
-    'gallery.title': 'Gallery',
-    'gallery.subtitle': 'Discover our achievements',
+    'gallery.title': 'Our Floor Sanding Projects',
+    'gallery.subtitle': 'Discover our floor sanding projects in Montreal',
     'gallery.before': 'Before',
     'gallery.after': 'After',
 
