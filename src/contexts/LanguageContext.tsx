@@ -316,9 +316,13 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Footer
     'footer.quote': 'Free Quote',
-    'footer.hours': 'Business Hours',
-    'footer.hours.weekday': 'Monday - Friday: 8am - 6pm',
-    'footer.hours.weekend': 'Saturday: 9am - 3pm',
+    'footer.cta.description': 'Get a free estimate for your floor sanding project in Montreal.',
+    'footer.brand.description': 'TALON PLANCHER – Experts in floor sanding, stair sanding and hardwood floor repair in Montreal, South Shore and North Shore.',
+    'footer.trust.title': 'Why trust us',
+    'footer.trust.1': 'Free no-obligation quote',
+    'footer.trust.2': 'Professional high-quality equipment',
+    'footer.trust.3': 'Satisfaction guaranteed on all work',
+    'footer.trust.4': 'Fast service in Montreal and area',
     'footer.contact': 'Contact Info',
     'footer.links': 'Quick Links',
     'footer.rights': 'All rights reserved.',
