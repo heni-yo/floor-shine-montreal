@@ -131,9 +131,9 @@ const translations: Record<Language, Record<string, string>> = {
     'testimonials.subtitle': 'Ce que nos clients disent',
 
     // Areas
-    'areas.title': 'Zones Desservies',
-    'areas.subtitle': 'Nous couvrons Montréal et ses environs',
-    'areas.description': 'Notre équipe se déplace dans toute la grande région de Montréal pour vous offrir un service de qualité.',
+    'areas.title': 'Zones Desservies à Montréal',
+    'areas.subtitle': 'Sablage de plancher à Montréal et ses environs',
+    'areas.description': 'Notre équipe de sablage de plancher se déplace à Montréal, sur la Rive-Sud et la Rive-Nord pour vous offrir un service professionnel.',
 
     // FAQ
     'faq.title': 'Questions Fréquentes',
