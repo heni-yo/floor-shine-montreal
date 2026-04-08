@@ -21,9 +21,9 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.quote': 'Soumission gratuite',
 
     // Hero
-    'hero.title': 'Experts en Sablage de Plancher',
-    'hero.subtitle': 'Montréal et environs',
-    'hero.description': 'Redonnez vie à vos planchers de bois avec notre service professionnel de sablage. Qualité supérieure, résultats impeccables.',
+    'hero.title': 'Sablage de Plancher à Montréal',
+    'hero.subtitle': 'Montréal · Rive-Sud · Rive-Nord',
+    'hero.description': 'Redonnez vie à vos planchers de bois franc avec notre service professionnel de sablage de plancher à Montréal. Qualité supérieure, résultats impeccables, soumission gratuite.',
     'hero.cta.quote': 'Demander une soumission',
     'hero.cta.call': 'Appelez-nous',
 
