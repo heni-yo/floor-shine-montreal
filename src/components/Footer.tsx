@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, Clock, ArrowRight } from 'lucide-react';
+import { Phone, Mail, MapPin, ArrowRight, CheckCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const Footer = () => {
@@ -31,7 +31,7 @@ const Footer = () => {
                 {t('footer.quote')}
               </h3>
               <p className="text-accent-foreground/70">
-                {t('hero.description')}
+                {t('footer.cta.description')}
               </p>
             </div>
             <button onClick={scrollToForm} className="btn-primary whitespace-nowrap">
@@ -50,11 +50,11 @@ const Footer = () => {
             <div>
               <img
                 src="/logo.svg"
-                alt="Talon Plancher"
+                alt="TALON PLANCHER – Sablage de plancher à Montréal"
                 className="h-12 w-auto max-w-[240px] object-contain object-left mb-4"
               />
               <p className="text-accent-foreground/70 text-sm">
-                {t('hero.description')}
+                {t('footer.brand.description')}
               </p>
             </div>
 
@@ -63,35 +63,43 @@ const Footer = () => {
               <h4 className="font-serif font-bold text-lg mb-4">{t('footer.contact')}</h4>
               <ul className="space-y-3">
                 <li>
-                  <a href="tel:+15141234567" className="flex items-center gap-3 text-accent-foreground/70 hover:text-primary transition-colors">
+                  <a href="tel:+15142334083" className="flex items-center gap-3 text-accent-foreground/70 hover:text-primary transition-colors">
                     <Phone className="w-4 h-4" />
-                    (514) 123-4567
+                    (514) 233-4083
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:info@sablagepromtl.ca" className="flex items-center gap-3 text-accent-foreground/70 hover:text-primary transition-colors">
+                  <a href="mailto:sablage@talonplancher.com" className="flex items-center gap-3 text-accent-foreground/70 hover:text-primary transition-colors">
                     <Mail className="w-4 h-4" />
-                    info@sablagepromtl.ca
+                    sablage@talonplancher.com
                   </a>
                 </li>
                 <li className="flex items-start gap-3 text-accent-foreground/70">
                   <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
-                  Montréal, QC
+                  Montréal, Rive-Sud, Rive-Nord
                 </li>
               </ul>
             </div>
 
-            {/* Hours */}
+            {/* Why Trust Us (replaces Hours) */}
             <div>
-              <h4 className="font-serif font-bold text-lg mb-4">{t('footer.hours')}</h4>
-              <ul className="space-y-2 text-accent-foreground/70">
-                <li className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  {t('footer.hours.weekday')}
+              <h4 className="font-serif font-bold text-lg mb-4">{t('footer.trust.title')}</h4>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-accent-foreground/70 text-sm">
+                  <CheckCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                  {t('footer.trust.1')}
                 </li>
-                <li className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  {t('footer.hours.weekend')}
+                <li className="flex items-start gap-2 text-accent-foreground/70 text-sm">
+                  <CheckCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                  {t('footer.trust.2')}
+                </li>
+                <li className="flex items-start gap-2 text-accent-foreground/70 text-sm">
+                  <CheckCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                  {t('footer.trust.3')}
+                </li>
+                <li className="flex items-start gap-2 text-accent-foreground/70 text-sm">
+                  <CheckCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                  {t('footer.trust.4')}
                 </li>
               </ul>
             </div>
@@ -106,6 +114,7 @@ const Footer = () => {
                   { key: 'nav.gallery', id: 'gallery' },
                   { key: 'nav.testimonials', id: 'testimonials' },
                   { key: 'nav.faq', id: 'faq' },
+                  { key: 'nav.quote', id: 'quote-form' },
                 ].map((link) => (
                   <li key={link.id}>
                     <button
