@@ -236,16 +236,16 @@ const translations: Record<Language, Record<string, string>> = {
     'form.selectService': 'Please select at least one service',
 
     // Services
-    'services.title': 'Our Services',
-    'services.subtitle': 'Professional solutions for your hardwood floors',
+    'services.title': 'Floor Sanding Services in Montreal',
+    'services.subtitle': 'Professional sanding, finishing and hardwood floor repair solutions',
     'services.floor.title': 'Floor Sanding',
-    'services.floor.description': 'Restore the natural beauty of your hardwood floors. Our team uses professional techniques for a flawless finish.',
+    'services.floor.description': 'Restore the natural beauty of your hardwood floors in Montreal. Our team uses professional sanding techniques for a flawless finish in your home.',
     'services.floor.benefits': 'Removal of scratches and imperfections • Custom stain application • Durable and resistant finish',
     'services.stairs.title': 'Stair Sanding',
-    'services.stairs.description': 'Transform your wooden stairs with professional sanding. Each step receives special attention.',
+    'services.stairs.description': 'Transform your wooden stairs with professional sanding in Montreal. Each step receives special attention for a harmonious result.',
     'services.stairs.benefits': 'Meticulous work on each step • Harmonization with your floors • Non-slip finish available',
     'services.repair.title': 'Floor Repair',
-    'services.repair.description': 'Repair damage, replace damaged boards and correct imperfections before sanding.',
+    'services.repair.description': 'Professional hardwood floor repair service in Montreal. Replace damaged boards and correct imperfections before sanding.',
     'services.repair.benefits': 'Replacement of damaged boards • Correction of warped planks • Repair of joints and cracks',
     'services.cta': 'Request a Quote',
 
