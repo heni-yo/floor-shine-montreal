@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://floor-shine-montreal.lovable.app/sitemap.xml
