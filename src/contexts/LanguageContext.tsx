@@ -290,9 +290,9 @@ const translations: Record<Language, Record<string, string>> = {
     'testimonials.subtitle': 'What our clients say',
 
     // Areas
-    'areas.title': 'Service Areas',
-    'areas.subtitle': 'We cover Montreal and surrounding areas',
-    'areas.description': 'Our team travels throughout the greater Montreal area to offer you quality service.',
+    'areas.title': 'Service Areas in Montreal',
+    'areas.subtitle': 'Floor sanding in Montreal and surrounding areas',
+    'areas.description': 'Our floor sanding team serves Montreal, the South Shore and the North Shore with professional service.',
 
     // FAQ
     'faq.title': 'Frequently Asked Questions',
