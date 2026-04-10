@@ -1,0 +1,4 @@
+# Static site output must include /robots.txt and /sitemap.xml from public/
+[build]
+  command = "npm run build"
+  publish = "dist"

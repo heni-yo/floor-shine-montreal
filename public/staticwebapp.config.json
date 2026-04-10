@@ -1,0 +1,16 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*",
+      "/img/*",
+      "/robots.txt",
+      "/sitemap.xml",
+      "/site.webmanifest",
+      "/schema-org-localbusiness.json",
+      "/background.avif",
+      "/background.webp",
+      "/background.png"
+    ]
+  }
+}
