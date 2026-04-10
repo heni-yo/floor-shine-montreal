@@ -1,14 +1,10 @@
+import { lazy, Suspense } from 'react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import QuoteForm from '@/components/QuoteForm';
-import Services from '@/components/Services';
-import WhyUs from '@/components/WhyUs';
-import Process from '@/components/Process';
-import Gallery from '@/components/Gallery';
-import Testimonials from '@/components/Testimonials';
-import Areas from '@/components/Areas';
-import FAQ from '@/components/FAQ';
 import Footer from '@/components/Footer';
+
+const BelowTheFold = lazy(() => import('@/pages/BelowTheFold'));
 
 const Index = () => {
   return (
@@ -17,13 +13,9 @@ const Index = () => {
       <main>
         <Hero />
         <QuoteForm />
-        <Services />
-        <WhyUs />
-        <Process />
-        <Gallery />
-        <Testimonials />
-        <Areas />
-        <FAQ />
+        <Suspense fallback={null}>
+          <BelowTheFold />
+        </Suspense>
       </main>
       <Footer />
     </div>

@@ -1,0 +1,5 @@
+# https://talonplancher.com/robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://talonplancher.com/sitemap.xml
