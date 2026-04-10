@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Send, CheckCircle, Upload, X, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -81,6 +81,11 @@ const QuoteForm = () => {
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
+  useEffect(() => {
+    if (!isSubmitted) return;
+    document.getElementById('quote-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [isSubmitted]);
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
@@ -110,7 +115,7 @@ const QuoteForm = () => {
       newErrors.floorType = t('form.required');
     }
     if (!formData.date) newErrors.date = t('form.required');
-    if (!formData.area.trim()) newErrors.area = t('form.required');
+    if (formData.services.floor && !formData.area.trim()) newErrors.area = t('form.required');
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -170,7 +175,13 @@ const QuoteForm = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Superficie: n'accepter que des chiffres (ex: 500)
+    if (name === 'area') {
+      const digitsOnly = value.replace(/[^\d]/g, '');
+      setFormData((prev) => ({ ...prev, area: digitsOnly }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
     if (errors[name]) {
       setErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
     }
@@ -214,10 +225,10 @@ const QuoteForm = () => {
         <div className="container-custom">
           <div className="max-w-2xl mx-auto text-center">
             <div className="card-wood p-12">
-              <CheckCircle className="w-16 h-16 text-primary mx-auto mb-6" />
-              <h3 className="font-serif text-2xl md:text-3xl font-bold text-foreground mb-4">
+              <CheckCircle className="w-16 h-16 text-primary mx-auto mb-6" aria-hidden />
+              <p className="font-serif text-2xl md:text-3xl font-bold text-foreground leading-snug">
                 {t('form.success')}
-              </h3>
+              </p>
             </div>
           </div>
         </div>
@@ -324,6 +335,93 @@ const QuoteForm = () => {
                     </RadioGroup>
                     <p className="text-xs text-muted-foreground italic">{t('form.floorType.note')}</p>
                     {errors.floorType && <p className="text-destructive text-sm">{errors.floorType}</p>}
+
+                    <div className="pt-2 space-y-6">
+                      {/* Area */}
+                      <div className="space-y-2">
+                        <Label htmlFor="area">{t('form.area')} *</Label>
+                        <Input
+                          id="area"
+                          name="area"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={formData.area}
+                          onChange={handleChange}
+                          placeholder="Ex: 500"
+                          className="bg-background"
+                        />
+                        <p className="text-sm text-muted-foreground">{t('form.areaHelper')}</p>
+                        <p className="text-sm text-muted-foreground">{t('form.areaExample')}</p>
+                        {errors.area && <p className="text-destructive text-sm">{errors.area}</p>}
+                      </div>
+
+                      {/* Want Color */}
+                      <div className="space-y-3">
+                        <Label>{t('form.wantColor')}</Label>
+                        <RadioGroup
+                          value={formData.wantColor}
+                          onValueChange={(value) => setFormData((prev) => ({ ...prev, wantColor: value }))}
+                          className="flex gap-6"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="yes" id="color-yes" />
+                            <Label htmlFor="color-yes" className="font-normal cursor-pointer">
+                              {t('form.colorYes')}
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="no" id="color-no" />
+                            <Label htmlFor="color-no" className="font-normal cursor-pointer">
+                              {t('form.colorNo')}
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+
+                      {/* Photo Upload */}
+                      <div className="space-y-3">
+                        <Label>{t('form.photos')}</Label>
+                        <p className="text-sm text-muted-foreground">{t('form.photosMax')}</p>
+                        <div
+                          className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                          <p className="text-muted-foreground">{formData.photos.length}/10</p>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handlePhotoUpload}
+                            className="hidden"
+                            disabled={formData.photos.length >= 10}
+                          />
+                        </div>
+                        {formData.photos.length > 0 && (
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
+                            {formData.photos.map((photo, index) => (
+                              <div key={index} className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+                                <img
+                                  src={URL.createObjectURL(photo)}
+                                  alt={`Photo ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removePhoto(index)}
+                                  className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">{t('form.uploadNote')}</p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -374,54 +472,6 @@ const QuoteForm = () => {
             <div className="space-y-2">
               <Label htmlFor="details">{t('form.details')}</Label>
               <Textarea id="details" name="details" value={formData.details} onChange={handleChange} rows={4} className="bg-background resize-none" />
-            </div>
-
-            {/* Area */}
-            <div className="space-y-2">
-              <Label htmlFor="area">{t('form.area')} *</Label>
-              <Input id="area" name="area" value={formData.area} onChange={handleChange} placeholder="Ex: 500" className="bg-background" />
-              <p className="text-sm text-muted-foreground">{t('form.areaHelper')}</p>
-              <p className="text-sm text-muted-foreground">{t('form.areaExample')}</p>
-              {errors.area && <p className="text-destructive text-sm">{errors.area}</p>}
-            </div>
-
-            {/* Want Color */}
-            <div className="space-y-3">
-              <Label>{t('form.wantColor')}</Label>
-              <RadioGroup value={formData.wantColor} onValueChange={(value) => setFormData(prev => ({ ...prev, wantColor: value }))} className="flex gap-6">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="color-yes" />
-                  <Label htmlFor="color-yes" className="font-normal cursor-pointer">{t('form.colorYes')}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="color-no" />
-                  <Label htmlFor="color-no" className="font-normal cursor-pointer">{t('form.colorNo')}</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {/* Photo Upload */}
-            <div className="space-y-3">
-              <Label>{t('form.photos')}</Label>
-              <p className="text-sm text-muted-foreground">{t('form.photosMax')}</p>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-muted-foreground">{formData.photos.length}/10</p>
-                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" disabled={formData.photos.length >= 10} />
-              </div>
-              {formData.photos.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
-                  {formData.photos.map((photo, index) => (
-                    <div key={index} className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-                      <img src={URL.createObjectURL(photo)} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
-                      <button type="button" onClick={() => removePhoto(index)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground">{t('form.uploadNote')}</p>
             </div>
 
             {/* Special Needs */}

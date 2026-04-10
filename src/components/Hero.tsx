@@ -1,9 +1,9 @@
 import { ArrowRight, Phone } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import backgroundImage from '/public/background.png';
 
 const Hero = () => {
   const { t } = useLanguage();
+  const backgroundImageUrl = '/background.png';
 
   const scrollToForm = () => {
     const element = document.getElementById('quote-form');
@@ -18,7 +18,7 @@ const Hero = () => {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url(${backgroundImage})`,
+          backgroundImage: `url(${backgroundImageUrl})`,
           backgroundPosition: "left top"
         }}
       >

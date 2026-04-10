@@ -30,7 +30,7 @@ export const quotePayloadSchema = z
     stairDetails: stairDetailsSchema.default({}),
     date: z.string().min(1).max(32),
     details: z.string().max(8000).optional().default(''),
-    area: z.string().trim().min(1).max(32),
+    area: z.string().trim().max(32).optional().default(''),
     wantColor: yesNoEmpty,
     specialNeeds: z.string().max(8000).optional().default(''),
   })
@@ -40,6 +40,13 @@ export const quotePayloadSchema = z
         code: z.ZodIssueCode.custom,
         message: 'Type de plancher requis lorsque le sablage de plancher est sélectionné.',
         path: ['floorType'],
+      });
+    }
+    if (data.services.floor && data.area.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Superficie requise lorsque le sablage de plancher est sélectionné.',
+        path: ['area'],
       });
     }
   });
