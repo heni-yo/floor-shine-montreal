@@ -1,4 +1,3 @@
-# https://talonplancher.com/robots.txt
 User-agent: *
 Allow: /
 
