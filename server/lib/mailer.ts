@@ -33,6 +33,11 @@ function getResend(): Resend {
 
 const INTERNAL_ATTACH_MAX_TOTAL_BYTES = 12 * 1024 * 1024;
 
+function resendErrorMessage(err: { message: string; name?: string }): string {
+  const name = err.name ? `[resend:${err.name}] ` : '';
+  return `${name}${err.message}`;
+}
+
 export async function sendQuoteEmails(params: {
   clientEmail: string;
   internalEmail: string;
@@ -75,16 +80,18 @@ export async function sendQuoteEmails(params: {
     COMPANY.email,
   ].join('\n');
 
+  const pdfBase64 = pdfBuffer.toString('base64');
+
   const clientResult = await resend.emails.send({
     from: fromAddress,
     to: clientEmail,
     replyTo: internalEmail,
     subject: clientSubject,
     text: clientText,
-    attachments: [{ filename: pdfName, content: pdfBuffer }],
+    attachments: [{ filename: pdfName, content: pdfBase64 }],
   });
   if (clientResult.error) {
-    throw new Error(clientResult.error.message);
+    throw new Error(resendErrorMessage(clientResult.error));
   }
 
   const photoLines = photoPaths.map((p) => `- ${path.basename(p)} (${p})`);
@@ -104,13 +111,14 @@ export async function sendQuoteEmails(params: {
     .join('\n');
 
   let total = 0;
-  const imageAttachments: { filename: string; path: string }[] = [];
+  const imageAttachments: { filename: string; content: string }[] = [];
   for (const filePath of photoPaths) {
     if (!fs.existsSync(filePath)) continue;
     const st = fs.statSync(filePath);
     if (total + st.size > INTERNAL_ATTACH_MAX_TOTAL_BYTES) break;
     total += st.size;
-    imageAttachments.push({ filename: path.basename(filePath), path: filePath });
+    const buf = await fs.promises.readFile(filePath);
+    imageAttachments.push({ filename: path.basename(filePath), content: buf.toString('base64') });
   }
 
   const internalResult = await resend.emails.send({
@@ -118,12 +126,9 @@ export async function sendQuoteEmails(params: {
     to: internalEmail,
     subject: `[Soumission] ${submissionId} — ${clientName}`,
     text: internalText,
-    attachments: [
-      { filename: pdfName, content: pdfBuffer },
-      ...imageAttachments.map((a) => ({ filename: a.filename, path: a.path })),
-    ],
+    attachments: [{ filename: pdfName, content: pdfBase64 }, ...imageAttachments],
   });
   if (internalResult.error) {
-    throw new Error(internalResult.error.message);
+    throw new Error(resendErrorMessage(internalResult.error));
   }
 }

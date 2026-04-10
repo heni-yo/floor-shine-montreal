@@ -245,13 +245,42 @@ export function createApp() {
             'RESEND_DOMAIN_NOT_VERIFIED',
           );
         }
+        if (
+          /\[resend:invalid_api_key\]|\[resend:missing_api_key\]/i.test(errMsg) ||
+          /invalid api key/i.test(errMsg)
+        ) {
+          return clientError(
+            res,
+            503,
+            'Clé API Resend refusée ou absente. Vérifiez RESEND_API_KEY dans les variables d’environnement du service (Render).',
+            'RESEND_API_KEY_INVALID',
+          );
+        }
+        if (/\[resend:restricted_api_key\]/i.test(errMsg)) {
+          return clientError(
+            res,
+            503,
+            'Cette clé Resend est restreinte et ne permet pas l’envoi. Créez une clé « Full access » ou adaptez les permissions sur resend.com/api-keys.',
+            'RESEND_API_KEY_RESTRICTED',
+          );
+        }
+        if (/\[resend:monthly_quota_exceeded\]|\[resend:daily_quota_exceeded\]|\[resend:rate_limit_exceeded\]/i.test(errMsg)) {
+          return clientError(
+            res,
+            503,
+            'Quota ou limite d’envoi Resend atteint. Réessayez plus tard ou vérifiez votre forfait sur resend.com.',
+            'RESEND_QUOTA',
+          );
+        }
         console.error('[quote]', err);
+        const verbose =
+          process.env.QUOTE_VERBOSE_ERRORS?.trim() === '1' ||
+          process.env.QUOTE_VERBOSE_ERRORS?.trim().toLowerCase() === 'true';
+        const showDetail = process.env.NODE_ENV !== 'production' || verbose;
         return clientError(
           res,
           500,
-          process.env.NODE_ENV === 'production'
-            ? 'Une erreur est survenue. Veuillez réessayer plus tard.'
-            : err.message || 'Erreur serveur',
+          showDetail ? err.message || 'Erreur serveur' : 'Une erreur est survenue. Veuillez réessayer plus tard.',
           'SERVER',
         );
       }
