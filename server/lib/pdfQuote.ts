@@ -8,10 +8,10 @@ import type { QuotePayload } from './quoteSchema.js';
 import type { EstimateResult } from './estimate.js';
 
 const ROOT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const LOGO_SVG_PATH = path.join(ROOT_DIR, 'public', 'logo.svg');
+const LOGO_SVG_PATH = path.join(ROOT_DIR, 'public', 'logoNav.svg');
 /** viewBox du logo (largeur × hauteur) pour calculer la hauteur affichée dans le PDF */
-const LOGO_VIEWBOX_W = 485;
-const LOGO_VIEWBOX_H = 315;
+const LOGO_VIEWBOX_W = 1058;
+const LOGO_VIEWBOX_H = 251;
 
 async function loadLogoPngForPdf(): Promise<Buffer | null> {
   try {

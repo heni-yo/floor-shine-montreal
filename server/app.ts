@@ -9,7 +9,7 @@ import { parseQuotePayload } from './lib/quoteSchema.js';
 import { nextSubmissionNumber } from './lib/submissionNumber.js';
 import { buildEstimate } from './lib/estimate.js';
 import { generateQuotePdf } from './lib/pdfQuote.js';
-import { sendQuoteEmails, SmtpConfigError } from './lib/mailer.js';
+import { sendQuoteEmails, MailConfigError } from './lib/mailer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -233,8 +233,17 @@ export function createApp() {
         if (err.message?.includes('Seules les images')) {
           return clientError(res, 400, err.message, 'INVALID_FILE');
         }
-        if (err instanceof SmtpConfigError) {
-          return clientError(res, 503, err.message, 'SMTP_NOT_CONFIGURED');
+        if (err instanceof MailConfigError) {
+          return clientError(res, 503, err.message, 'EMAIL_NOT_CONFIGURED');
+        }
+        const errMsg = err.message ?? '';
+        if (/domain is not verified/i.test(errMsg) || /verify your domain/i.test(errMsg)) {
+          return clientError(
+            res,
+            503,
+            'Le domaine de l’adresse d’envoi (MAIL_FROM) n’est pas vérifié dans Resend. Ajoutez ce domaine et complétez la vérification DNS sur https://resend.com/domains.',
+            'RESEND_DOMAIN_NOT_VERIFIED',
+          );
         }
         console.error('[quote]', err);
         return clientError(

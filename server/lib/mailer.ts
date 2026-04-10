@@ -1,47 +1,34 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import fs from 'node:fs';
 import path from 'node:path';
 import { COMPANY } from '../config/company.js';
 
-/** Levée quand l’envoi réel est demandé mais SMTP n’est pas configuré. */
-export class SmtpConfigError extends Error {
+/** Levée quand l’envoi réel est demandé mais Resend n’est pas configuré. */
+export class MailConfigError extends Error {
   constructor() {
     super(
-      'Configuration SMTP incomplète. Ajoutez SMTP_HOST, SMTP_USER et SMTP_PASS dans .env (voir .env.example), ou utilisez SKIP_EMAIL=true pour tester sans envoyer de courriels.',
+      'Configuration Resend incomplète. Ajoutez RESEND_API_KEY dans .env, ou utilisez SKIP_EMAIL=true pour tester sans envoyer de courriels.',
     );
-    this.name = 'SmtpConfigError';
+    this.name = 'MailConfigError';
   }
 }
 
-function smtpVarsPresent(): boolean {
-  const host = process.env.SMTP_HOST?.trim();
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS?.trim();
-  return Boolean(host && user && pass);
+function resendApiKeyPresent(): boolean {
+  return Boolean(process.env.RESEND_API_KEY?.trim());
 }
 
-/** Si true : pas d’envoi SMTP (PDF et fichiers restent générés / stockés). */
+/** Si true : pas d’envoi (PDF et fichiers restent générés / stockés). */
 export function isSkipEmailMode(): boolean {
   const v = process.env.SKIP_EMAIL?.trim().toLowerCase();
   return v === '1' || v === 'true' || v === 'yes';
 }
 
-function getTransporter() {
-  const host = process.env.SMTP_HOST?.trim();
-  const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS?.trim();
-
-  if (!host || !user || !pass) {
-    throw new SmtpConfigError();
+function getResend(): Resend {
+  const key = process.env.RESEND_API_KEY?.trim();
+  if (!key) {
+    throw new MailConfigError();
   }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
+  return new Resend(key);
 }
 
 const INTERNAL_ATTACH_MAX_TOTAL_BYTES = 12 * 1024 * 1024;
@@ -66,11 +53,11 @@ export async function sendQuoteEmails(params: {
     return;
   }
 
-  if (!smtpVarsPresent()) {
-    throw new SmtpConfigError();
+  if (!resendApiKeyPresent()) {
+    throw new MailConfigError();
   }
 
-  const transporter = getTransporter();
+  const resend = getResend();
   const pdfName = `Soumission-${submissionId}.pdf`;
 
   const clientSubject = `Votre soumission ${submissionId} — ${COMPANY.legalName}`;
@@ -88,7 +75,7 @@ export async function sendQuoteEmails(params: {
     COMPANY.email,
   ].join('\n');
 
-  await transporter.sendMail({
+  const clientResult = await resend.emails.send({
     from: fromAddress,
     to: clientEmail,
     replyTo: internalEmail,
@@ -96,6 +83,9 @@ export async function sendQuoteEmails(params: {
     text: clientText,
     attachments: [{ filename: pdfName, content: pdfBuffer }],
   });
+  if (clientResult.error) {
+    throw new Error(clientResult.error.message);
+  }
 
   const photoLines = photoPaths.map((p) => `- ${path.basename(p)} (${p})`);
   const publicBase = process.env.PUBLIC_API_BASE_URL?.replace(/\/$/, '');
@@ -123,7 +113,7 @@ export async function sendQuoteEmails(params: {
     imageAttachments.push({ filename: path.basename(filePath), path: filePath });
   }
 
-  await transporter.sendMail({
+  const internalResult = await resend.emails.send({
     from: fromAddress,
     to: internalEmail,
     subject: `[Soumission] ${submissionId} — ${clientName}`,
@@ -133,4 +123,7 @@ export async function sendQuoteEmails(params: {
       ...imageAttachments.map((a) => ({ filename: a.filename, path: a.path })),
     ],
   });
+  if (internalResult.error) {
+    throw new Error(internalResult.error.message);
+  }
 }

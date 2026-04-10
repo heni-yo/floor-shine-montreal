@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './load-env.js';
 import { createApp, ensureUploadDirs } from './app.js';
 
 const PORT = Number(process.env.PORT || 3001);
