@@ -82,6 +82,11 @@ export function createApp() {
     }),
   );
 
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    next();
+  });
+
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, service: 'quote-api' });
   });

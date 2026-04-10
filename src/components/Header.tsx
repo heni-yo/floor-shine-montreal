@@ -40,6 +40,8 @@ const Header = () => {
             <img
               src="/logoNav.svg"
               alt="Talon Plancher"
+              width={1058}
+              height={251}
               className="h-12 md:h-14 w-auto max-w-[260px] object-contain object-left"
             />
           </button>
@@ -86,17 +88,21 @@ const Header = () => {
 
             {/* Mobile Menu Button */}
             <button
+              type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-2 text-foreground"
+              className="lg:hidden inline-flex min-h-11 min-w-11 items-center justify-center rounded-md p-2 text-foreground"
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-navigation"
+              aria-label={isMenuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
             >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMenuOpen ? <X className="w-6 h-6" aria-hidden /> : <Menu className="w-6 h-6" aria-hidden />}
             </button>
           </div>
         </div>
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-background animate-fade-in">
+          <div id="mobile-navigation" className="lg:hidden border-t border-border bg-background animate-fade-in">
             <nav className="flex flex-col py-4 px-4">
               {navItems.map((item) => (
                 <button

@@ -144,19 +144,29 @@ const Gallery = () => {
         </div>
 
         {/* Dot Indicators */}
-        <div className="flex justify-center gap-1.5 mt-6">
+        <div className="flex justify-center gap-1 mt-6" role="group" aria-label={t('gallery.carouselLabel')}>
           {dotsToShow.map((dotIndex) => (
             <button
               key={dotIndex}
+              type="button"
               onClick={() => emblaApi?.scrollTo(dotIndex)}
               className={cn(
-                'w-2 h-2 rounded-full transition-all duration-300',
-                dotIndex === selectedIndex
-                  ? 'bg-primary w-6'
-                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                'inline-flex h-11 min-w-11 items-center justify-center rounded-full p-2 transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
               )}
-              aria-label={`Go to slide ${dotIndex + 1}`}
-            />
+              aria-label={`${t('gallery.aria.slideNav')} ${dotIndex + 1}`}
+              aria-current={dotIndex === selectedIndex ? 'true' : undefined}
+            >
+              <span
+                className={cn(
+                  'block rounded-full transition-all duration-300',
+                  dotIndex === selectedIndex
+                    ? 'h-2 w-6 bg-primary'
+                    : 'h-2 w-2 bg-muted-foreground/45 hover:bg-muted-foreground/65'
+                )}
+                aria-hidden
+              />
+            </button>
           ))}
         </div>
 

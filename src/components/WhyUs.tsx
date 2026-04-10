@@ -21,7 +21,7 @@ const WhyUs = () => {
           <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
             {t('why.title')}
           </h2>
-          <p className="text-accent-foreground/80 text-lg max-w-2xl mx-auto">
+          <p className="text-accent-foreground/90 text-lg max-w-2xl mx-auto">
             {t('why.subtitle')}
           </p>
         </div>
@@ -39,7 +39,7 @@ const WhyUs = () => {
               <h3 className="font-serif text-xl font-bold mb-2">
                 {t(reason.titleKey)}
               </h3>
-              <p className="text-accent-foreground/70">
+              <p className="text-accent-foreground/90">
                 {t(reason.descriptionKey)}
               </p>
             </div>

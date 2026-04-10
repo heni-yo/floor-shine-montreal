@@ -1,9 +1,11 @@
 import { ArrowRight, Phone } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+const HERO_BG_WIDTH = 1376;
+const HERO_BG_HEIGHT = 768;
+
 const Hero = () => {
   const { t } = useLanguage();
-  const backgroundImageUrl = '/background.png';
 
   const scrollToForm = () => {
     const element = document.getElementById('quote-form');
@@ -14,16 +16,23 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center pt-20">
-      {/* Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: `url(${backgroundImageUrl})`,
-          backgroundPosition: "left top"
-        }}
-      >
-        
-        <div className="absolute inset-0 bg-black/65"></div>
+      {/* Background — real <img> for LCP (fetchpriority + dimensions); AVIF/WebP with PNG fallback */}
+      <div className="absolute inset-0 overflow-hidden">
+        <picture className="absolute inset-0 block">
+          <source srcSet="/background.avif" type="image/avif" />
+          <source srcSet="/background.webp" type="image/webp" />
+          <img
+            src="/background.png"
+            alt=""
+            width={HERO_BG_WIDTH}
+            height={HERO_BG_HEIGHT}
+            className="absolute inset-0 h-full w-full object-cover object-left"
+            fetchPriority="high"
+            decoding="async"
+            sizes="100vw"
+          />
+        </picture>
+        <div className="absolute inset-0 bg-black/65" aria-hidden />
       </div>
       {/* Content */}
       <div className="relative z-10 container-custom px-4 py-16 md:py-24">

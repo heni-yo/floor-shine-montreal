@@ -1,0 +1,27 @@
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "TALON PLANCHER",
+  "description": "Experts en sablage de plancher, sablage d'escalier et réparation de planchers de bois franc à Montréal.",
+  "url": "https://talonplancher.com",
+  "telephone": "+1-514-233-4083",
+  "email": "sablage@talonplancher.com",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Montréal",
+    "addressRegion": "QC",
+    "addressCountry": "CA"
+  },
+  "areaServed": [
+    { "@type": "City", "name": "Montréal" },
+    { "@type": "Place", "name": "Rive-Sud" },
+    { "@type": "Place", "name": "Rive-Nord" }
+  ],
+  "serviceType": [
+    "Sablage de plancher",
+    "Sablage d'escalier",
+    "Réparation de plancher",
+    "Finition de plancher"
+  ],
+  "priceRange": "$$"
+}

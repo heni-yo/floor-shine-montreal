@@ -19,6 +19,8 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.faq': 'FAQ',
     'nav.contact': 'Contact',
     'nav.quote': 'Soumission gratuite',
+    'nav.menuOpen': 'Ouvrir le menu de navigation',
+    'nav.menuClose': 'Fermer le menu de navigation',
 
     // Hero
     'hero.title': 'Sablage de Plancher à Montréal',
@@ -125,6 +127,8 @@ const translations: Record<Language, Record<string, string>> = {
     'gallery.subtitle': 'Découvrez nos projets de sablage de plancher à Montréal',
     'gallery.before': 'Avant',
     'gallery.after': 'Après',
+    'gallery.carouselLabel': 'Carrousel de la galerie',
+    'gallery.aria.slideNav': 'Aller à l\'image',
 
     // Testimonials
     'testimonials.title': 'Témoignages',
@@ -178,6 +182,8 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.faq': 'FAQ',
     'nav.contact': 'Contact',
     'nav.quote': 'Free Quote',
+    'nav.menuOpen': 'Open navigation menu',
+    'nav.menuClose': 'Close navigation menu',
 
     // Hero
     'hero.title': 'Floor Sanding in Montreal',
@@ -284,6 +290,8 @@ const translations: Record<Language, Record<string, string>> = {
     'gallery.subtitle': 'Discover our floor sanding projects in Montreal',
     'gallery.before': 'Before',
     'gallery.after': 'After',
+    'gallery.carouselLabel': 'Gallery carousel',
+    'gallery.aria.slideNav': 'Go to image',
 
     // Testimonials
     'testimonials.title': 'Testimonials',
