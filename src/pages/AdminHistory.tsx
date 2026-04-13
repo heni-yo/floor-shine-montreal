@@ -11,8 +11,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Trash2, Download, Eye, FileSpreadsheet, Image, RefreshCw } from "lucide-react";
+import { Search, Trash2, Download, Eye, FileSpreadsheet, Image, RefreshCw, Smartphone, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useHistoryPwa } from "@/hooks/useHistoryPwa";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -37,6 +39,11 @@ export default function AdminHistory() {
   const [viewFiles, setViewFiles] = useState<{ id: string; files: string[] } | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const { toast } = useToast();
+  const { deferredPrompt, runInstall } = useHistoryPwa();
+  const isIOS = useMemo(
+    () => typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent),
+    [],
+  );
 
   const fetchSubmissions = async () => {
     setLoading(true);
@@ -109,6 +116,37 @@ export default function AdminHistory() {
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Rafraîchir
           </Button>
         </div>
+
+        {/* PWA — installation sur l’écran d’accueil */}
+        <Collapsible className="mb-6 rounded-lg border bg-card text-card-foreground shadow-sm">
+          <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/50 rounded-lg transition-colors [&[data-state=open]>svg]:rotate-180">
+            <span className="flex items-center gap-2 font-medium text-sm">
+              <Smartphone className="h-4 w-4 shrink-0 text-primary" />
+              Installer cette page sur votre téléphone
+            </span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-4 pb-4 pt-0 space-y-3 text-sm text-muted-foreground border-t">
+            <p className="pt-3">
+              Ajoutez l’historique des soumissions comme une application : icône sur l’écran d’accueil, affichage plein écran, retour rapide sans passer par le site public.
+            </p>
+            {deferredPrompt ? (
+              <Button type="button" variant="default" size="sm" className="w-full sm:w-auto" onClick={() => void runInstall()}>
+                Ajouter à l’écran d’accueil
+              </Button>
+            ) : isIOS ? (
+              <ol className="list-decimal list-inside space-y-1.5 text-foreground/90">
+                <li>Ouvrez cette page dans <strong>Safari</strong>.</li>
+                <li>Appuyez sur le bouton <strong>Partager</strong> <span className="whitespace-nowrap">(□↑)</span>.</li>
+                <li>Choisissez <strong>Sur l’écran d’accueil</strong>, puis <strong>Ajouter</strong>.</li>
+              </ol>
+            ) : (
+              <p className="text-xs">
+                Sur Chrome ou Edge (Android) : menu du navigateur → <strong className="text-foreground">Installer l’application</strong> ou <strong className="text-foreground">Ajouter à l’écran d’accueil</strong>. Si le bouton bleu n’apparaît pas, rechargez la page après quelques secondes.
+              </p>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Search */}
         <div className="relative mb-6 max-w-md">
