@@ -6,6 +6,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { parseQuotePayload } from './lib/quoteSchema.js';
+import adminRoutes from './routes/admin.js';
 import { nextSubmissionNumber } from './lib/submissionNumber.js';
 import { buildEstimate } from './lib/estimate.js';
 import { generateQuoteExcel } from './lib/excelQuote.js';
