@@ -29,6 +29,7 @@ export function useHistoryPwa() {
       addedMeta.push(m);
     };
     pushMeta("apple-mobile-web-app-capable", "yes");
+    pushMeta("mobile-web-app-capable", "yes");
     pushMeta("apple-mobile-web-app-title", "Historique");
     pushMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
     pushMeta("theme-color", "#0f172a");

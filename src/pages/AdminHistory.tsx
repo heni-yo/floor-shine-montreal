@@ -15,7 +15,13 @@ import { Search, Trash2, Download, Eye, FileSpreadsheet, Image, RefreshCw, Smart
 import { useToast } from "@/hooks/use-toast";
 import { useHistoryPwa } from "@/hooks/useHistoryPwa";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { adminFetch, clearStoredAdminToken, getStoredAdminToken, setStoredAdminToken } from "@/lib/adminSession";
+import {
+  adminFetch,
+  clearStoredAdminToken,
+  getStoredAdminToken,
+  readAdminErrorMessage,
+  setStoredAdminToken,
+} from "@/lib/adminSession";
 import { AdminProtectedImage } from "@/components/AdminProtectedImage";
 
 interface Submission {
@@ -38,6 +44,7 @@ export default function AdminHistory() {
   const [authed, setAuthed] = useState(false);
   const [loginToken, setLoginToken] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [apiConfigHint, setApiConfigHint] = useState<string | null>(null);
 
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(false);
@@ -58,7 +65,11 @@ export default function AdminHistory() {
     setLoading(true);
     try {
       const res = await adminFetch("/api/admin/submissions");
-      if (res.status === 401) {
+      if (res.status === 503) {
+        const msg = await readAdminErrorMessage(res);
+        setApiConfigHint(msg);
+        toast({ title: "API non configurée", description: msg, variant: "destructive" });
+      } else if (res.status === 401) {
         clearStoredAdminToken();
         setAuthed(false);
         setSubmissions([]);
@@ -85,6 +96,9 @@ export default function AdminHistory() {
         setAuthed(true);
       } else {
         clearStoredAdminToken();
+        if (res.status === 503) {
+          setApiConfigHint(await readAdminErrorMessage(res));
+        }
       }
       setSessionChecked(true);
     })();
@@ -102,9 +116,18 @@ export default function AdminHistory() {
     const res = await adminFetch("/api/admin/submissions");
     if (!res.ok) {
       clearStoredAdminToken();
-      setLoginError("Jeton invalide ou accès refusé.");
+      if (res.status === 503) {
+        const msg = await readAdminErrorMessage(res);
+        setApiConfigHint(msg);
+        setLoginError("Le serveur API doit avoir la variable ADMIN_API_TOKEN (Render → Environment).");
+      } else if (res.status === 401) {
+        setLoginError("Jeton invalide.");
+      } else {
+        setLoginError(await readAdminErrorMessage(res));
+      }
       return;
     }
+    setApiConfigHint(null);
     setSubmissions(await res.json());
     setAuthed(true);
     setLoginToken("");
@@ -193,6 +216,12 @@ export default function AdminHistory() {
           <p className="text-sm text-muted-foreground mt-2">
             Saisissez le jeton configuré sur le serveur (<code className="text-xs bg-muted px-1 rounded">ADMIN_API_TOKEN</code>), jamais partagé publiquement.
           </p>
+          {apiConfigHint ? (
+            <div className="mt-4 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <strong className="block mb-1">Erreur 503 — configuration API</strong>
+              {apiConfigHint}
+            </div>
+          ) : null}
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
             <Input
               type="password"

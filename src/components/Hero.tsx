@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react';
 import { ArrowRight, Phone } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -6,6 +7,22 @@ const HERO_BG_HEIGHT = 768;
 
 const Hero = () => {
   const { t } = useLanguage();
+
+  useLayoutEffect(() => {
+    const id = 'hero-preload-bg-avif';
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = '/background.avif';
+    link.type = 'image/avif';
+    link.setAttribute('fetchpriority', 'high');
+    document.head.appendChild(link);
+    return () => {
+      link.remove();
+    };
+  }, []);
 
   const scrollToForm = () => {
     const element = document.getElementById('quote-form');

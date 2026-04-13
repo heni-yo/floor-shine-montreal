@@ -2,7 +2,7 @@
 <html lang="fr-ca">
 
 <head>
-  <link rel="preload" as="image" href="/background.avif" type="image/avif" fetchpriority="high" />
+  <!-- Pas de preload global : sur les routes sans hero (ex. /history123) l’image ne s’affiche pas et le navigateur avertit. L’accueil charge l’arrière-plan via le CSS. -->
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">

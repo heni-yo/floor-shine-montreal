@@ -28,3 +28,16 @@ export async function adminFetch(path: string, init?: RequestInit): Promise<Resp
   const p = path.startsWith("/") ? path : `/${path}`;
   return fetch(`${apiBase()}${p}`, { ...init, headers });
 }
+
+/** Message d’erreur lisible depuis le corps JSON de l’API (une seule lecture). */
+export async function readAdminErrorMessage(res: Response): Promise<string> {
+  try {
+    const text = await res.text();
+    if (!text) return res.statusText || `Erreur ${res.status}`;
+    const j = JSON.parse(text) as { error?: string };
+    if (typeof j.error === "string") return j.error;
+    return `Erreur ${res.status}`;
+  } catch {
+    return res.statusText || `Erreur ${res.status}`;
+  }
+}
