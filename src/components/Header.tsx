@@ -71,11 +71,11 @@ const Header = () => {
 
             {/* Phone CTA - Desktop */}
             <a
-              href="tel:+15142334083"
+              href="tel:+14508093491"
               className="hidden md:flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
             >
               <Phone className="w-4 h-4" />
-              <span>(514) 233-4083</span>
+              <span>+1 450-809-3491</span>
             </a>
 
             {/* Quote Button - Desktop */}
@@ -115,11 +115,11 @@ const Header = () => {
               ))}
               <div className="pt-4 mt-4 border-t border-border flex flex-col gap-3">
                 <a
-                  href="tel:+15142334083"
+                  href="tel:+14508093491"
                   className="flex items-center gap-2 text-primary"
                 >
                   <Phone className="w-4 h-4" />
-                  <span>(514) 233-4083</span>
+                  <span>+1 450-809-3491</span>
                 </a>
                 <button
                   onClick={() => scrollToSection('quote-form')}

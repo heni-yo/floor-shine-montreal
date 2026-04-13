@@ -2,7 +2,7 @@
 export const COMPANY = {
   legalName: 'TalonPlancher',
   cityLine: 'Montréal, QC',
-  phone: '514-233-4083',
+  phone: '450-809-3491',
   email: 'sablage@talonplancher.com',
   /** Pied de page PDF — certification / mentions (centré, petit texte). */
   pdfCertificationLines: [

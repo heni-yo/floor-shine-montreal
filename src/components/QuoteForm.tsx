@@ -269,7 +269,7 @@ const QuoteForm = () => {
               ))}
               <div className="space-y-2">
                 <Label htmlFor="phone">{t('form.phone')} *</Label>
-                <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="(514) 123-4567" className="bg-background" />
+                <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="(450) 123-4567" className="bg-background" />
                 {errors.phone && <p className="text-destructive text-sm">{errors.phone}</p>}
               </div>
               <div className="space-y-2">
