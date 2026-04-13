@@ -213,7 +213,10 @@ export default function AdminHistory() {
 
       {/* Lightbox */}
       <Dialog open={!!lightbox} onOpenChange={() => setLightbox(null)}>
-        <DialogContent className="max-w-4xl p-2">
+        <DialogContent className="max-w-4xl p-2" aria-describedby={undefined}>
+          <DialogHeader className="sr-only">
+            <DialogTitle>Aperçu photo</DialogTitle>
+          </DialogHeader>
           {lightbox && <img src={lightbox} alt="Photo" className="w-full h-auto rounded" />}
         </DialogContent>
       </Dialog>
