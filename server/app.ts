@@ -6,6 +6,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { parseQuotePayload } from './lib/quoteSchema.js';
+import adminRoutes from './routes/admin.js';
 import { nextSubmissionNumber } from './lib/submissionNumber.js';
 import { buildEstimate } from './lib/estimate.js';
 import { generateQuoteExcel } from './lib/excelQuote.js';
@@ -86,6 +87,8 @@ export function createApp() {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     next();
   });
+
+  app.use(adminRoutes);
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, service: 'quote-api' });
@@ -209,6 +212,22 @@ export function createApp() {
           payload,
           estimate,
         });
+
+        // Save metadata + Excel locally
+        const meta = {
+          submissionId,
+          createdAt: createdAt.toISOString(),
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          email: payload.email,
+          phone: payload.phone,
+          city: payload.city,
+          postalCode: payload.postalCode,
+          services: payload.services,
+          photos: files.map((f) => path.basename(f.path)),
+        };
+        fs.writeFileSync(path.join(finalDir, 'meta.json'), JSON.stringify(meta, null, 2), 'utf8');
+        fs.writeFileSync(path.join(finalDir, 'quote.xlsx'), excelBuffer);
 
         const mailFrom = process.env.MAIL_FROM || 'sablage@talonplancher.com';
         const mailInternal = process.env.MAIL_TO_INTERNAL || 'sablage@talonplancher.com';
