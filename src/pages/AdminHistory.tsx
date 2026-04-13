@@ -50,6 +50,8 @@ export default function AdminHistory() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteCode, setDeleteCode] = useState("");
+  const [deleteCodeError, setDeleteCodeError] = useState("");
   const [viewFiles, setViewFiles] = useState<{ id: string; files: string[] } | null>(null);
   const [lightbox, setLightbox] = useState<{ submissionId: string; filename: string } | null>(null);
 
@@ -172,8 +174,17 @@ export default function AdminHistory() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    if (deleteCode.trim() !== "2580") {
+      setDeleteCodeError("Code invalide. Réessayez.");
+      return;
+    }
+    setDeleteCodeError("");
     try {
-      const res = await adminFetch(`/api/admin/submissions/${encodeURIComponent(deleteTarget)}`, { method: "DELETE" });
+      const q = new URLSearchParams({ code: "2580" });
+      const res = await adminFetch(
+        `/api/admin/submissions/${encodeURIComponent(deleteTarget)}?${q.toString()}`,
+        { method: "DELETE" },
+      );
       if (res.ok) {
         setSubmissions((prev) => prev.filter((s) => s.submissionId !== deleteTarget));
         toast({ title: "Supprimé", description: `${deleteTarget} a été supprimé.` });
@@ -184,6 +195,7 @@ export default function AdminHistory() {
       toast({ title: "Erreur", description: "Erreur réseau.", variant: "destructive" });
     }
     setDeleteTarget(null);
+    setDeleteCode("");
   };
 
   const filtered = useMemo(() => {
@@ -405,7 +417,16 @@ export default function AdminHistory() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteCode("");
+            setDeleteCodeError("");
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cette soumission ?</AlertDialogTitle>
@@ -413,6 +434,23 @@ export default function AdminHistory() {
               La soumission <strong>{deleteTarget}</strong> et ses fichiers seront définitivement supprimés. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <label htmlFor="delete-confirm-code" className="text-sm font-medium text-foreground">
+              Code de confirmation
+            </label>
+            <Input
+              id="delete-confirm-code"
+              type="password"
+              autoComplete="off"
+              placeholder="Saisir le code"
+              value={deleteCode}
+              onChange={(e) => {
+                setDeleteCode(e.target.value);
+                setDeleteCodeError("");
+              }}
+            />
+            {deleteCodeError ? <p className="text-sm text-destructive">{deleteCodeError}</p> : null}
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={() => void handleDelete()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">

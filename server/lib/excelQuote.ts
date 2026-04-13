@@ -25,7 +25,7 @@ async function loadLogoPngForExcel(): Promise<Buffer | null> {
       console.warn('[excel] Logo SVG introuvable:', LOGO_SVG_PATH);
       return null;
     }
-    return await sharp(LOGO_SVG_PATH).resize({ width: 420 }).png().toBuffer();
+    return await sharp(LOGO_SVG_PATH).resize({ width: 380 }).png().toBuffer();
   } catch (e) {
     console.warn('[excel] Impossible de convertir le logo pour Excel:', e);
     return null;
@@ -165,7 +165,8 @@ export async function generateQuoteExcel(params: {
   applyBorderToRange(sheet, 1, 4, 1, 2);
   if (logoBuf) {
     const logoId = workbook.addImage({ buffer: logoBuf, extension: 'png' });
-    const imgW = 260;
+    /** Largeur d’affichage dans la zone fusionnée A1:B4 (ratio conservé). */
+    const imgW = 220;
     const imgH = (imgW * LOGO_VIEWBOX_H) / LOGO_VIEWBOX_W;
     sheet.addImage(logoId, {
       tl: { col: 0.15, row: 0.08 },
@@ -263,58 +264,65 @@ export async function generateQuoteExcel(params: {
   let r = headRow + 1;
 
   const sqft = parsePositiveNumber(payload.area);
-  const qtyFloor = payload.services.floor ? `${formatNumber(sqft ?? 0)}` : '0';
-  const unitFloor = payload.services.floor ? formatUnitPrice(unitRateFloor(payload)) : '';
+  const showFloorRow = payload.services.floor === true && sqft != null && sqft > 0;
   const floorAmount = estimate.lines.find((l) => /Sablage de plancher/i.test(l.description))?.amount ?? null;
-  const floorNumeric = payload.services.floor && floorAmount != null ? floorAmount : 0;
-  const totalFloor = payload.services.floor
+  const floorNumeric = showFloorRow && floorAmount != null ? floorAmount : 0;
+  const totalFloor = showFloorRow
     ? floorAmount == null
       ? 'Sur devis'
       : moneyOrQuote(floorAmount)
     : formatTotal(0);
 
-  sheet.getCell(r, 1).value = 'Pieds carrés de Finitec Ex-Duo+ et/ou finitec Ex-Tech';
-  sheet.getCell(r, 2).value = qtyFloor;
-  sheet.getCell(r, 3).value = unitFloor;
-  sheet.getCell(r, 4).value = totalFloor;
-  for (let c = 1; c <= 4; c++) {
-    sheet.getCell(r, c).font = { size: 10 };
-    sheet.getCell(r, c).alignment = {
-      vertical: 'middle',
-      horizontal: c === 1 ? 'left' : c === 4 ? 'right' : 'center',
-      wrapText: true,
-    };
-    sheet.getCell(r, c).border = BORDER;
+  if (showFloorRow) {
+    const qtyFloor = formatNumber(sqft!);
+    const unitFloor = formatUnitPrice(unitRateFloor(payload));
+    sheet.getCell(r, 1).value = 'Pieds carrés de Finitec Ex-Duo+ et/ou finitec Ex-Tech';
+    sheet.getCell(r, 2).value = qtyFloor;
+    sheet.getCell(r, 3).value = unitFloor;
+    sheet.getCell(r, 4).value = totalFloor;
+    for (let c = 1; c <= 4; c++) {
+      sheet.getCell(r, c).font = { size: 10 };
+      sheet.getCell(r, c).alignment = {
+        vertical: 'middle',
+        horizontal: c === 1 ? 'left' : c === 4 ? 'right' : 'center',
+        wrapText: true,
+      };
+      sheet.getCell(r, c).border = BORDER;
+    }
+    r += 1;
   }
-  r += 1;
 
   const repairYes = payload.services.repair === true;
-  sheet.getCell(r, 1).value = 'Réparation du plancher';
-  sheet.getCell(r, 2).value = repairYes ? 'Oui' : 'Non';
-  sheet.getCell(r, 3).value = '';
-  sheet.getCell(r, 4).value = repairYes ? 'Sur devis' : formatTotal(0);
-  for (let c = 1; c <= 4; c++) {
-    sheet.getCell(r, c).font = { size: 10 };
-    sheet.getCell(r, c).alignment = {
-      vertical: 'middle',
-      horizontal: c === 1 ? 'left' : c === 4 ? 'right' : 'center',
-      wrapText: true,
-    };
-    sheet.getCell(r, c).border = BORDER;
+  if (repairYes) {
+    sheet.getCell(r, 1).value = 'Réparation du plancher';
+    sheet.getCell(r, 2).value = 'Oui';
+    sheet.getCell(r, 3).value = '';
+    sheet.getCell(r, 4).value = 'Sur devis';
+    for (let c = 1; c <= 4; c++) {
+      sheet.getCell(r, c).font = { size: 10 };
+      sheet.getCell(r, c).alignment = {
+        vertical: 'middle',
+        horizontal: c === 1 ? 'left' : c === 4 ? 'right' : 'center',
+        wrapText: true,
+      };
+      sheet.getCell(r, c).border = BORDER;
+    }
+    r += 1;
   }
-  r += 1;
 
   let stairsTotal = 0;
-  const stairsAnySelected = payload.services.stairs;
+  const stairsAnySelected = payload.services.stairs === true;
   for (const sl of STAIR_LINES) {
     const qty = payload.services.stairs ? parseQty(payload.stairDetails?.[sl.key]) : 0;
     const lineTotal = Math.round(qty * sl.unit * 100) / 100;
-    if (payload.services.stairs) stairsTotal += lineTotal;
+    if (!payload.services.stairs || qty <= 0) continue;
+
+    stairsTotal += lineTotal;
 
     sheet.getCell(r, 1).value = sl.label;
-    sheet.getCell(r, 2).value = payload.services.stairs ? formatNumber(qty) : '0';
+    sheet.getCell(r, 2).value = formatNumber(qty);
     sheet.getCell(r, 3).value = formatUnitPrice(sl.unit);
-    sheet.getCell(r, 4).value = payload.services.stairs ? formatTotal(lineTotal) : formatTotal(0);
+    sheet.getCell(r, 4).value = formatTotal(lineTotal);
     for (let c = 1; c <= 4; c++) {
       sheet.getCell(r, c).font = { size: 10 };
       sheet.getCell(r, c).alignment = {

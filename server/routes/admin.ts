@@ -48,6 +48,10 @@ router.get('/api/admin/submissions/:id/file/:filename', async (req, res) => {
 });
 
 router.delete('/api/admin/submissions/:id', async (req, res) => {
+  const code = typeof req.query.code === 'string' ? req.query.code.trim() : '';
+  if (code !== '2580') {
+    return res.status(403).json({ error: 'Code de confirmation invalide.' });
+  }
   try {
     const ok = await deleteSubmissionEverywhere(req.params.id);
     if (!ok) {
