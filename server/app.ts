@@ -210,6 +210,22 @@ export function createApp() {
           estimate,
         });
 
+        // Save metadata + Excel locally
+        const meta = {
+          submissionId,
+          createdAt: createdAt.toISOString(),
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          email: payload.email,
+          phone: payload.phone,
+          city: payload.city,
+          postalCode: payload.postalCode,
+          services: payload.services,
+          photos: files.map((f) => path.basename(f.path)),
+        };
+        fs.writeFileSync(path.join(finalDir, 'meta.json'), JSON.stringify(meta, null, 2), 'utf8');
+        fs.writeFileSync(path.join(finalDir, 'quote.xlsx'), excelBuffer);
+
         const mailFrom = process.env.MAIL_FROM || 'sablage@talonplancher.com';
         const mailInternal = process.env.MAIL_TO_INTERNAL || 'sablage@talonplancher.com';
 
