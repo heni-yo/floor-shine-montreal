@@ -1,10 +1,15 @@
 import './load-env.js';
 import { createApp, ensureUploadDirs } from './app.js';
+import { migrateSubmissionsFromDisk } from './lib/submissionsDb.js';
+import { isSupabaseMode } from './lib/submissionsStore.js';
 
 const BASE_PORT = Number(process.env.PORT || 3001);
 const MAX_PORT_TRIES = 10;
 
 ensureUploadDirs();
+if (!isSupabaseMode()) {
+  migrateSubmissionsFromDisk();
+}
 const app = createApp();
 
 function listenWithFallback(startPort: number) {

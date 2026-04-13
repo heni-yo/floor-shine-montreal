@@ -44,15 +44,27 @@ export async function sendQuoteEmails(params: {
   submissionId: string;
   excelBuffer: Buffer;
   photoPaths: string[];
+  /** Prioritaire sur photoPaths (évite dépendre du disque après envoi Supabase). */
+  photoAttachments?: { filename: string; buffer: Buffer }[];
   clientName: string;
 }): Promise<void> {
-  const { clientEmail, internalEmail, fromAddress, submissionId, excelBuffer, photoPaths, clientName } =
-    params;
+  const {
+    clientEmail,
+    internalEmail,
+    fromAddress,
+    submissionId,
+    excelBuffer,
+    photoPaths,
+    photoAttachments,
+    clientName,
+  } = params;
+
+  const photoCount = photoAttachments?.length ?? photoPaths.length;
 
   if (isSkipEmailMode()) {
     console.warn('[mail] SKIP_EMAIL activé — aucun courriel envoyé.');
     console.warn(
-      `[mail] Soumission ${submissionId} | client: ${clientEmail} | interne: ${internalEmail} | Excel: ${excelBuffer.length} o | photos: ${photoPaths.length}`,
+      `[mail] Soumission ${submissionId} | client: ${clientEmail} | interne: ${internalEmail} | Excel: ${excelBuffer.length} o | photos: ${photoCount}`,
     );
     return;
   }
@@ -65,14 +77,16 @@ export async function sendQuoteEmails(params: {
   const excelName = `Soumission-${submissionId}.xlsx`;
   const excelBase64 = excelBuffer.toString('base64');
 
-  const photoLines = photoPaths.map((p) => `- ${path.basename(p)} (${p})`);
+  const photoLines = photoAttachments?.length
+    ? photoAttachments.map((p) => `- ${p.filename}`)
+    : photoPaths.map((p) => `- ${path.basename(p)} (${p})`);
   const publicBase = process.env.PUBLIC_API_BASE_URL?.replace(/\/$/, '');
   const internalText = [
     `Nouvelle soumission ${submissionId}`,
     `Client : ${clientName} <${clientEmail}>`,
     '',
     'Fichiers téléversés :',
-    photoPaths.length ? photoLines.join('\n') : '(aucune photo)',
+    photoCount ? photoLines.join('\n') : '(aucune photo)',
     '',
     publicBase
       ? 'Les fichiers sont stockés sur le serveur ; configurez un endpoint de téléchargement sécurisé si besoin.'
@@ -83,13 +97,21 @@ export async function sendQuoteEmails(params: {
 
   let total = 0;
   const imageAttachments: { filename: string; content: string }[] = [];
-  for (const filePath of photoPaths) {
-    if (!fs.existsSync(filePath)) continue;
-    const st = fs.statSync(filePath);
-    if (total + st.size > INTERNAL_ATTACH_MAX_TOTAL_BYTES) break;
-    total += st.size;
-    const buf = await fs.promises.readFile(filePath);
-    imageAttachments.push({ filename: path.basename(filePath), content: buf.toString('base64') });
+  if (photoAttachments?.length) {
+    for (const p of photoAttachments) {
+      if (total + p.buffer.length > INTERNAL_ATTACH_MAX_TOTAL_BYTES) break;
+      total += p.buffer.length;
+      imageAttachments.push({ filename: p.filename, content: p.buffer.toString('base64') });
+    }
+  } else {
+    for (const filePath of photoPaths) {
+      if (!fs.existsSync(filePath)) continue;
+      const st = fs.statSync(filePath);
+      if (total + st.size > INTERNAL_ATTACH_MAX_TOTAL_BYTES) break;
+      total += st.size;
+      const buf = await fs.promises.readFile(filePath);
+      imageAttachments.push({ filename: path.basename(filePath), content: buf.toString('base64') });
+    }
   }
 
   const internalResult = await resend.emails.send({

@@ -1,10 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { SERVER_DATA_DIR } from '../paths.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const COUNTER_FILE = path.join(DATA_DIR, 'submission-counter.json');
+const COUNTER_FILE = path.join(SERVER_DATA_DIR, 'submission-counter.json');
 
 type CounterState = { year: number; seq: number };
 
@@ -30,7 +28,7 @@ function readState(): CounterState {
 
 /** Numéro du type EST-2026-0001 (séquentiel par année, persistant sur disque). */
 export function nextSubmissionNumber(): string {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.mkdirSync(SERVER_DATA_DIR, { recursive: true });
   const state = readState();
   const year = new Date().getFullYear();
   const next: CounterState =

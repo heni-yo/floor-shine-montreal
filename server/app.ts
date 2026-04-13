@@ -4,17 +4,15 @@ import multer from 'multer';
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
 import { parseQuotePayload } from './lib/quoteSchema.js';
 import adminRoutes from './routes/admin.js';
-import { nextSubmissionNumber } from './lib/submissionNumber.js';
 import { buildEstimate } from './lib/estimate.js';
 import { generateQuoteExcel } from './lib/excelQuote.js';
 import { sendQuoteEmails, MailConfigError } from './lib/mailer.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, '..');
-export const UPLOAD_ROOT = path.join(ROOT, 'uploads');
+import { insertSubmission } from './lib/submissionsDb.js';
+import { getNextSubmissionId, isSupabaseMode } from './lib/submissionsStore.js';
+import { persistQuoteToSupabase } from './lib/supabaseSubmissions.js';
+import { UPLOAD_ROOT } from './paths.js';
 
 export function ensureUploadDirs() {
   fs.mkdirSync(path.join(UPLOAD_ROOT, 'temp'), { recursive: true });
@@ -191,7 +189,7 @@ export function createApp() {
           return clientError(res, 400, 'Code postal invalide.', 'VALIDATION');
         }
 
-        const submissionId = nextSubmissionNumber();
+        const submissionId = await getNextSubmissionId();
         const finalDir = path.join(UPLOAD_ROOT, submissionId);
         if (fs.existsSync(finalDir)) {
           cleanupTemp();
@@ -226,21 +224,51 @@ export function createApp() {
           services: payload.services,
           photos: files.map((f) => path.basename(f.path)),
         };
-        fs.writeFileSync(path.join(finalDir, 'meta.json'), JSON.stringify(meta, null, 2), 'utf8');
+
         fs.writeFileSync(path.join(finalDir, 'quote.xlsx'), excelBuffer);
 
         const mailFrom = process.env.MAIL_FROM || 'sablage@talonplancher.com';
         const mailInternal = process.env.MAIL_TO_INTERNAL || 'sablage@talonplancher.com';
 
-        await sendQuoteEmails({
-          clientEmail: payload.email,
-          internalEmail: mailInternal,
-          fromAddress: mailFrom,
-          submissionId,
-          excelBuffer,
-          photoPaths,
-          clientName: `${payload.firstName} ${payload.lastName}`.trim(),
-        });
+        if (isSupabaseMode()) {
+          const photoAttachments = files.map((f) => {
+            const name = path.basename(f.path);
+            return { filename: name, buffer: fs.readFileSync(path.join(finalDir, name)) };
+          });
+          await persistQuoteToSupabase(meta, finalDir);
+          await sendQuoteEmails({
+            clientEmail: payload.email,
+            internalEmail: mailInternal,
+            fromAddress: mailFrom,
+            submissionId,
+            excelBuffer,
+            photoPaths: [],
+            photoAttachments,
+            clientName: `${payload.firstName} ${payload.lastName}`.trim(),
+          });
+          try {
+            fs.rmSync(finalDir, { recursive: true, force: true });
+          } catch {
+            /* */
+          }
+          submissionFolder = undefined;
+        } else {
+          fs.writeFileSync(path.join(finalDir, 'meta.json'), JSON.stringify(meta, null, 2), 'utf8');
+          await sendQuoteEmails({
+            clientEmail: payload.email,
+            internalEmail: mailInternal,
+            fromAddress: mailFrom,
+            submissionId,
+            excelBuffer,
+            photoPaths,
+            clientName: `${payload.firstName} ${payload.lastName}`.trim(),
+          });
+          try {
+            insertSubmission(meta);
+          } catch (e) {
+            console.error('[quote] enregistrement base SQLite', e);
+          }
+        }
 
         return res.status(201).json({
           ok: true,
