@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { parseQuotePayload } from './lib/quoteSchema.js';
 import { nextSubmissionNumber } from './lib/submissionNumber.js';
 import { buildEstimate } from './lib/estimate.js';
-import { generateQuotePdf } from './lib/pdfQuote.js';
+import { generateQuoteExcel } from './lib/excelQuote.js';
 import { sendQuoteEmails, MailConfigError } from './lib/mailer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -203,7 +203,7 @@ export function createApp() {
 
         const estimate = buildEstimate(payload);
         const createdAt = new Date();
-        const pdfBuffer = await generateQuotePdf({
+        const excelBuffer = await generateQuoteExcel({
           submissionId,
           createdAt,
           payload,
@@ -218,7 +218,7 @@ export function createApp() {
           internalEmail: mailInternal,
           fromAddress: mailFrom,
           submissionId,
-          pdfBuffer,
+          excelBuffer,
           photoPaths,
           clientName: `${payload.firstName} ${payload.lastName}`.trim(),
         });

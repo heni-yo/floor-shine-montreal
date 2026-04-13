@@ -1,4 +1,4 @@
-/** Coordonnées affichées sur la soumission PDF et dans les courriels. */
+/** Coordonnées affichées sur les documents de soumission et dans les courriels. */
 export const COMPANY = {
   legalName: 'TalonPlancher',
   cityLine: 'Montréal, QC',

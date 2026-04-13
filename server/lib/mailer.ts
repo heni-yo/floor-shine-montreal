@@ -1,7 +1,6 @@
 import { Resend } from 'resend';
 import fs from 'node:fs';
 import path from 'node:path';
-import { COMPANY } from '../config/company.js';
 
 /** Levée quand l’envoi réel est demandé mais Resend n’est pas configuré. */
 export class MailConfigError extends Error {
@@ -17,7 +16,7 @@ function resendApiKeyPresent(): boolean {
   return Boolean(process.env.RESEND_API_KEY?.trim());
 }
 
-/** Si true : pas d’envoi (PDF et fichiers restent générés / stockés). */
+/** Si true : pas d’envoi (fichiers restent générés / stockés). */
 export function isSkipEmailMode(): boolean {
   const v = process.env.SKIP_EMAIL?.trim().toLowerCase();
   return v === '1' || v === 'true' || v === 'yes';
@@ -43,17 +42,17 @@ export async function sendQuoteEmails(params: {
   internalEmail: string;
   fromAddress: string;
   submissionId: string;
-  pdfBuffer: Buffer;
+  excelBuffer: Buffer;
   photoPaths: string[];
   clientName: string;
 }): Promise<void> {
-  const { clientEmail, internalEmail, fromAddress, submissionId, pdfBuffer, photoPaths, clientName } =
+  const { clientEmail, internalEmail, fromAddress, submissionId, excelBuffer, photoPaths, clientName } =
     params;
 
   if (isSkipEmailMode()) {
     console.warn('[mail] SKIP_EMAIL activé — aucun courriel envoyé.');
     console.warn(
-      `[mail] Soumission ${submissionId} | client: ${clientEmail} | interne: ${internalEmail} | PDF: ${pdfBuffer.length} o | photos: ${photoPaths.length}`,
+      `[mail] Soumission ${submissionId} | client: ${clientEmail} | interne: ${internalEmail} | Excel: ${excelBuffer.length} o | photos: ${photoPaths.length}`,
     );
     return;
   }
@@ -63,36 +62,8 @@ export async function sendQuoteEmails(params: {
   }
 
   const resend = getResend();
-  const pdfName = `Soumission-${submissionId}.pdf`;
-
-  const clientSubject = `Votre soumission ${submissionId} — ${COMPANY.legalName}`;
-  const clientText = [
-    `Bonjour ${clientName},`,
-    '',
-    'Merci d’avoir demandé une soumission pour vos travaux de sablage de plancher.',
-    '',
-    `Vous trouverez en pièce jointe votre document de soumission (no ${submissionId}).`,
-    '',
-    'Notre équipe vous contactera sous peu si une précision est nécessaire.',
-    '',
-    `${COMPANY.legalName}`,
-    COMPANY.phone,
-    COMPANY.email,
-  ].join('\n');
-
-  const pdfBase64 = pdfBuffer.toString('base64');
-
-  const clientResult = await resend.emails.send({
-    from: fromAddress,
-    to: clientEmail,
-    replyTo: internalEmail,
-    subject: clientSubject,
-    text: clientText,
-    attachments: [{ filename: pdfName, content: pdfBase64 }],
-  });
-  if (clientResult.error) {
-    throw new Error(resendErrorMessage(clientResult.error));
-  }
+  const excelName = `Soumission-${submissionId}.xlsx`;
+  const excelBase64 = excelBuffer.toString('base64');
 
   const photoLines = photoPaths.map((p) => `- ${path.basename(p)} (${p})`);
   const publicBase = process.env.PUBLIC_API_BASE_URL?.replace(/\/$/, '');
@@ -124,9 +95,10 @@ export async function sendQuoteEmails(params: {
   const internalResult = await resend.emails.send({
     from: fromAddress,
     to: internalEmail,
+    replyTo: internalEmail,
     subject: `[Soumission] ${submissionId} — ${clientName}`,
     text: internalText,
-    attachments: [{ filename: pdfName, content: pdfBase64 }, ...imageAttachments],
+    attachments: [{ filename: excelName, content: excelBase64 }, ...imageAttachments],
   });
   if (internalResult.error) {
     throw new Error(resendErrorMessage(internalResult.error));
