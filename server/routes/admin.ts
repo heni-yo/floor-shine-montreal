@@ -7,8 +7,11 @@ import {
   submissionExists,
 } from '../lib/submissionsStore.js';
 import { contentTypeForDownload } from '../lib/supabaseSubmissions.js';
+import { requireAdmin } from '../lib/adminAuth.js';
 
 const router = Router();
+
+router.use(requireAdmin);
 
 router.get('/api/admin/submissions', async (_req, res) => {
   try {
@@ -44,10 +47,6 @@ router.get('/api/admin/submissions/:id/file/:filename', async (req, res) => {
 });
 
 router.delete('/api/admin/submissions/:id', async (req, res) => {
-  const code = req.query.code as string;
-  if (code !== '2580') {
-    return res.status(403).json({ error: 'Code de confirmation invalide.' });
-  }
   try {
     const ok = await deleteSubmissionEverywhere(req.params.id);
     if (!ok) {

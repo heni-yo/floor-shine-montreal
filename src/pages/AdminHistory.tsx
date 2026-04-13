@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from "@/components/ui/table";
@@ -11,12 +11,12 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Trash2, Download, Eye, FileSpreadsheet, Image, RefreshCw, Smartphone, ChevronDown } from "lucide-react";
+import { Search, Trash2, Download, Eye, FileSpreadsheet, Image, RefreshCw, Smartphone, ChevronDown, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useHistoryPwa } from "@/hooks/useHistoryPwa";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
-const API = import.meta.env.VITE_API_URL || "";
+import { adminFetch, clearStoredAdminToken, getStoredAdminToken, setStoredAdminToken } from "@/lib/adminSession";
+import { AdminProtectedImage } from "@/components/AdminProtectedImage";
 
 interface Submission {
   submissionId: string;
@@ -29,15 +29,23 @@ interface Submission {
   photos: string[];
 }
 
+function fileApiPath(submissionId: string, filename: string): string {
+  return `/api/admin/submissions/${encodeURIComponent(submissionId)}/file/${encodeURIComponent(filename)}`;
+}
+
 export default function AdminHistory() {
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [authed, setAuthed] = useState(false);
+  const [loginToken, setLoginToken] = useState("");
+  const [loginError, setLoginError] = useState("");
+
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [deleteCode, setDeleteCode] = useState("");
-  const [deleteError, setDeleteError] = useState("");
   const [viewFiles, setViewFiles] = useState<{ id: string; files: string[] } | null>(null);
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ submissionId: string; filename: string } | null>(null);
+
   const { toast } = useToast();
   const { deferredPrompt, runInstall } = useHistoryPwa();
   const isIOS = useMemo(
@@ -45,16 +53,115 @@ export default function AdminHistory() {
     [],
   );
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = useCallback(async () => {
+    if (!getStoredAdminToken()) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/admin/submissions`);
-      if (res.ok) setSubmissions(await res.json());
-    } catch { /* ignore */ }
+      const res = await adminFetch("/api/admin/submissions");
+      if (res.status === 401) {
+        clearStoredAdminToken();
+        setAuthed(false);
+        setSubmissions([]);
+        toast({ title: "Session expirée", description: "Reconnectez-vous avec le jeton administrateur.", variant: "destructive" });
+      } else if (res.ok) {
+        setSubmissions(await res.json());
+      }
+    } catch {
+      /* ignore */
+    }
     setLoading(false);
+  }, [toast]);
+
+  useEffect(() => {
+    const t = getStoredAdminToken();
+    if (!t) {
+      setSessionChecked(true);
+      return;
+    }
+    (async () => {
+      const res = await adminFetch("/api/admin/submissions");
+      if (res.ok) {
+        setSubmissions(await res.json());
+        setAuthed(true);
+      } else {
+        clearStoredAdminToken();
+      }
+      setSessionChecked(true);
+    })();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    const trimmed = loginToken.trim();
+    if (!trimmed) {
+      setLoginError("Entrez le jeton.");
+      return;
+    }
+    setStoredAdminToken(trimmed);
+    const res = await adminFetch("/api/admin/submissions");
+    if (!res.ok) {
+      clearStoredAdminToken();
+      setLoginError("Jeton invalide ou accès refusé.");
+      return;
+    }
+    setSubmissions(await res.json());
+    setAuthed(true);
+    setLoginToken("");
   };
 
-  useEffect(() => { fetchSubmissions(); }, []);
+  const handleLogout = () => {
+    clearStoredAdminToken();
+    setAuthed(false);
+    setSubmissions([]);
+    setSearch("");
+  };
+
+  const downloadFile = async (submissionId: string, filename: string) => {
+    const path = fileApiPath(submissionId, filename);
+    try {
+      const res = await adminFetch(path);
+      if (!res.ok) {
+        toast({ title: "Téléchargement impossible", variant: "destructive" });
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast({ title: "Erreur réseau", variant: "destructive" });
+    }
+  };
+
+  const openFiles = async (id: string) => {
+    try {
+      const res = await adminFetch(`/api/admin/submissions/${encodeURIComponent(id)}/files`);
+      if (res.ok) {
+        const files: string[] = await res.json();
+        setViewFiles({ id, files });
+      }
+    } catch { /* ignore */ }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      const res = await adminFetch(`/api/admin/submissions/${encodeURIComponent(deleteTarget)}`, { method: "DELETE" });
+      if (res.ok) {
+        setSubmissions((prev) => prev.filter((s) => s.submissionId !== deleteTarget));
+        toast({ title: "Supprimé", description: `${deleteTarget} a été supprimé.` });
+      } else {
+        toast({ title: "Erreur", description: "Échec de la suppression.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Erreur", description: "Erreur réseau.", variant: "destructive" });
+    }
+    setDeleteTarget(null);
+  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return submissions;
@@ -68,56 +175,58 @@ export default function AdminHistory() {
     );
   }, [submissions, search]);
 
-  const handleDelete = async () => {
-    if (deleteCode !== "2580") {
-      setDeleteError("Code invalide. Réessayez.");
-      return;
-    }
-    try {
-      const res = await fetch(`${API}/api/admin/submissions/${deleteTarget}?code=2580`, { method: "DELETE" });
-      if (res.ok) {
-        setSubmissions((prev) => prev.filter((s) => s.submissionId !== deleteTarget));
-        toast({ title: "Supprimé", description: `${deleteTarget} a été supprimé.` });
-      } else {
-        toast({ title: "Erreur", description: "Échec de la suppression.", variant: "destructive" });
-      }
-    } catch {
-      toast({ title: "Erreur", description: "Erreur réseau.", variant: "destructive" });
-    }
-    setDeleteTarget(null);
-    setDeleteCode("");
-    setDeleteError("");
-  };
-
-  const openFiles = async (id: string) => {
-    try {
-      const res = await fetch(`${API}/api/admin/submissions/${id}/files`);
-      if (res.ok) {
-        const files: string[] = await res.json();
-        setViewFiles({ id, files });
-      }
-    } catch { /* ignore */ }
-  };
-
-  const fileUrl = (id: string, filename: string) => `${API}/api/admin/submissions/${id}/file/${filename}`;
-
   const isImage = (f: string) => /\.(jpe?g|png|gif|webp)$/i.test(f);
+
+  if (!sessionChecked) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <p className="text-muted-foreground">Chargement…</p>
+      </div>
+    );
+  }
+
+  if (!authed) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-sm">
+          <h1 className="text-xl font-semibold text-foreground">Accès administrateur</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Saisissez le jeton configuré sur le serveur (<code className="text-xs bg-muted px-1 rounded">ADMIN_API_TOKEN</code>), jamais partagé publiquement.
+          </p>
+          <form onSubmit={handleLogin} className="mt-6 space-y-4">
+            <Input
+              type="password"
+              autoComplete="off"
+              placeholder="Jeton d’accès"
+              value={loginToken}
+              onChange={(e) => { setLoginToken(e.target.value); setLoginError(""); }}
+            />
+            {loginError ? <p className="text-sm text-destructive">{loginError}</p> : null}
+            <Button type="submit" className="w-full">Se connecter</Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Historique des soumissions</h1>
             <p className="text-muted-foreground text-sm mt-1">{submissions.length} soumission{submissions.length !== 1 ? "s" : ""}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchSubmissions} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Rafraîchir
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => void fetchSubmissions()} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Rafraîchir
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" /> Déconnexion
+            </Button>
+          </div>
         </div>
 
-        {/* PWA — installation sur l’écran d’accueil */}
         <Collapsible className="mb-6 rounded-lg border bg-card text-card-foreground shadow-sm">
           <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/50 rounded-lg transition-colors [&[data-state=open]>svg]:rotate-180">
             <span className="flex items-center gap-2 font-medium text-sm">
@@ -148,7 +257,6 @@ export default function AdminHistory() {
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Search */}
         <div className="relative mb-6 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -159,7 +267,6 @@ export default function AdminHistory() {
           />
         </div>
 
-        {/* Table */}
         <div className="rounded-lg border bg-card">
           <Table>
             <TableHeader>
@@ -192,13 +299,11 @@ export default function AdminHistory() {
                   <TableCell className="hidden sm:table-cell text-sm">{s.photos?.length || 0}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" title="Voir les fichiers" onClick={() => openFiles(s.submissionId)}>
+                      <Button variant="ghost" size="icon" title="Voir les fichiers" onClick={() => void openFiles(s.submissionId)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" title="Télécharger Excel" asChild>
-                        <a href={fileUrl(s.submissionId, "quote.xlsx")} download>
-                          <FileSpreadsheet className="h-4 w-4" />
-                        </a>
+                      <Button variant="ghost" size="icon" title="Télécharger Excel" onClick={() => void downloadFile(s.submissionId, "quote.xlsx")}>
+                        <FileSpreadsheet className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" title="Supprimer" onClick={() => setDeleteTarget(s.submissionId)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -212,7 +317,6 @@ export default function AdminHistory() {
         </div>
       </div>
 
-      {/* View Files Dialog */}
       <Dialog open={!!viewFiles} onOpenChange={() => setViewFiles(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -225,8 +329,8 @@ export default function AdminHistory() {
                   <FileSpreadsheet className="h-5 w-5 text-primary" />
                   <span className="text-sm font-medium">{f}</span>
                 </div>
-                <Button variant="outline" size="sm" asChild>
-                  <a href={fileUrl(viewFiles.id, f)} download><Download className="h-4 w-4 mr-1" /> Télécharger</a>
+                <Button variant="outline" size="sm" type="button" onClick={() => viewFiles && void downloadFile(viewFiles.id, f)}>
+                  <Download className="h-4 w-4 mr-1" /> Télécharger
                 </Button>
               </div>
             ))}
@@ -237,9 +341,17 @@ export default function AdminHistory() {
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {viewFiles.files.filter(isImage).map((f) => (
-                    <button key={f} onClick={() => setLightbox(fileUrl(viewFiles.id, f))}
-                      className="rounded-lg overflow-hidden border hover:ring-2 ring-primary transition-all">
-                      <img src={fileUrl(viewFiles.id, f)} alt={f} className="w-full h-32 object-cover" loading="lazy" />
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => viewFiles && setLightbox({ submissionId: viewFiles.id, filename: f })}
+                      className="rounded-lg overflow-hidden border hover:ring-2 ring-primary transition-all text-left"
+                    >
+                      <AdminProtectedImage
+                        apiPath={fileApiPath(viewFiles.id, f)}
+                        alt={f}
+                        className="w-full h-32 object-cover"
+                      />
                     </button>
                   ))}
                 </div>
@@ -249,37 +361,32 @@ export default function AdminHistory() {
         </DialogContent>
       </Dialog>
 
-      {/* Lightbox */}
       <Dialog open={!!lightbox} onOpenChange={() => setLightbox(null)}>
         <DialogContent className="max-w-4xl p-2" aria-describedby={undefined}>
           <DialogHeader className="sr-only">
             <DialogTitle>Aperçu photo</DialogTitle>
           </DialogHeader>
-          {lightbox && <img src={lightbox} alt="Photo" className="w-full h-auto rounded" />}
+          {lightbox ? (
+            <AdminProtectedImage
+              apiPath={fileApiPath(lightbox.submissionId, lightbox.filename)}
+              alt="Photo"
+              className="w-full h-auto rounded"
+            />
+          ) : null}
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteCode(""); setDeleteError(""); } }}>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer cette soumission ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Entrez le code de confirmation pour supprimer <strong>{deleteTarget}</strong>. Cette action est irréversible.
+              La soumission <strong>{deleteTarget}</strong> et ses fichiers seront définitivement supprimés. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="my-2">
-            <Input
-              placeholder="Code de confirmation"
-              value={deleteCode}
-              onChange={(e) => { setDeleteCode(e.target.value); setDeleteError(""); }}
-              type="password"
-            />
-            {deleteError && <p className="text-destructive text-sm mt-2">{deleteError}</p>}
-          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={() => void handleDelete()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>

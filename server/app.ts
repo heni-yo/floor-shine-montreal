@@ -78,6 +78,7 @@ export function createApp() {
           ? frontendOrigin.split(',').map((o) => o.trim())
           : true,
       credentials: false,
+      allowedHeaders: ['Content-Type', 'Authorization'],
     }),
   );
 
