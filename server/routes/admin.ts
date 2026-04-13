@@ -11,7 +11,8 @@ import { requireAdmin } from '../lib/adminAuth.js';
 
 const router = Router();
 
-router.use(requireAdmin);
+/** Ne protéger que `/api/admin/*` — sinon `POST /api/quote` passait ici et recevait 401. */
+router.use('/api/admin', requireAdmin);
 
 router.get('/api/admin/submissions', async (_req, res) => {
   try {
