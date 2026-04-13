@@ -88,6 +88,8 @@ export function createApp() {
     next();
   });
 
+  app.use(adminRoutes);
+
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, service: 'quote-api' });
   });
