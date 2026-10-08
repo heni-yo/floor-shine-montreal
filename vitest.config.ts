@@ -2,7 +2,11 @@ import { defineConfig } from "vitest/config";
 import path from "path";
 
 export default defineConfig({
-  esbuild: { jsx: "automatic" },
+  // tsconfig.json impose `jsx: "preserve"` (exigé par Next.js) : sans ce
+  // réglage, Vite laisserait le JSX tel quel et tout test de composant
+  // échouerait à l'analyse. Vite 8 compile avec Oxc (l'ancienne option
+  // `esbuild` est ignorée).
+  oxc: { jsx: { runtime: "automatic" } },
   test: {
     environment: "jsdom",
     globals: true,
@@ -10,6 +14,6 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: { "@": path.resolve(import.meta.dirname, "./src") },
   },
 });
