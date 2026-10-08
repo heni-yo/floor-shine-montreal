@@ -7,10 +7,17 @@ const API_TARGET = process.env.API_PROXY_TARGET || 'http://localhost:3001';
 // pages et supprimerait la génération statique, qui est l'intérêt de cette migration.
 const isDev = process.env.NODE_ENV !== 'production';
 
-/** Origine de l'API Render (NEXT_PUBLIC_API_URL), pour restreindre connect-src. */
+/**
+ * URL de l'API Render. Repli sur VITE_API_URL : c'est le nom que portait la
+ * variable du temps de Vite, et elle existe déjà sur Vercel — sans ce repli,
+ * le formulaire casserait en production tant que la variable n'est pas renommée.
+ */
+const PUBLIC_API_URL = (process.env.NEXT_PUBLIC_API_URL || process.env.VITE_API_URL || '').trim();
+
+/** Origine de l'API, pour restreindre connect-src. */
 const API_ORIGIN = (() => {
   try {
-    return process.env.NEXT_PUBLIC_API_URL ? new URL(process.env.NEXT_PUBLIC_API_URL).origin : null;
+    return PUBLIC_API_URL ? new URL(PUBLIC_API_URL).origin : null;
   } catch {
     return null;
   }
@@ -40,6 +47,9 @@ const nextConfig: NextConfig = {
   // Les composants shadcn générés dans src/components/ui déclenchent des erreurs
   // de lint préexistantes. Le lint reste lancé séparément via `npm run lint`.
   eslint: { ignoreDuringBuilds: true },
+
+  // Injecte l'URL résolue ci-dessus dans le code client (formulaire, historique).
+  env: { NEXT_PUBLIC_API_URL: PUBLIC_API_URL },
 
   // Avec deux layouts racine (fr)/(en), une URL inconnue n'appartient à aucun
   // des deux : sans page 404 globale, Next affiche sa page générique en anglais.
