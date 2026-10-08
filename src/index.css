@@ -4,94 +4,49 @@
 
 @layer base {
   :root {
-    /* Wood-inspired palette */
-    --background: 40 33% 98%;
-    --foreground: 30 10% 15%;
+    /* Surfaces — blanc cassé neutre, le bois devient un accent et non le fond */
+    --background: 0 0% 100%;
+    --surface: 30 20% 97%;
+    --surface-strong: 30 16% 94%;
 
-    --card: 40 30% 97%;
-    --card-foreground: 30 10% 15%;
+    /* Texte — échelle de gris légèrement chaude, mais neutre (WCAG AA sur --background) */
+    --foreground: 24 12% 12%;
+    --muted-foreground: 24 6% 40%;
+    --card: 0 0% 100%;
+    --card-foreground: 24 12% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 24 12% 12%;
 
-    --popover: 40 30% 97%;
-    --popover-foreground: 30 10% 15%;
+    /* Bois — accent unique, assez foncé pour du texte sur blanc */
+    --primary: 26 68% 34%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 26 60% 96%;
 
-    /* Warm amber/brown primary — dark enough for WCAG AA vs primary-foreground */
-    --primary: 31 72% 37%;
-    --primary-foreground: 40 33% 98%;
+    --secondary: 30 20% 97%;
+    --secondary-foreground: 24 12% 12%;
+    --muted: 30 16% 95%;
 
-    /* Warm beige secondary */
-    --secondary: 35 25% 90%;
-    --secondary-foreground: 30 12% 18%;
+    /* Sections foncées : noyer profond, désaturé */
+    --accent: 24 26% 14%;
+    --accent-foreground: 30 20% 96%;
 
-    --muted: 35 20% 92%;
-    --muted-foreground: 30 14% 32%;
-
-    /* Rich brown accent */
-    --accent: 25 50% 30%;
-    --accent-foreground: 40 33% 98%;
-
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 35 20% 85%;
-    --input: 35 20% 85%;
-    --ring: 35 80% 45%;
+    --border: 28 14% 89%;
+    --border-strong: 28 12% 82%;
+    --input: 28 14% 86%;
+    --ring: 26 68% 34%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    /* Custom tokens */
-    --wood-light: 35 30% 95%;
-    --wood-medium: 30 40% 75%;
-    --wood-dark: 25 45% 25%;
-    --wood-accent: 35 85% 50%;
-    
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(30 40% 20%) 0%, hsl(25 35% 15%) 100%);
-    --gradient-wood: linear-gradient(180deg, hsl(35 30% 95%) 0%, hsl(35 25% 90%) 100%);
-    --gradient-cta: linear-gradient(135deg, hsl(31 72% 37%) 0%, hsl(28 68% 32%) 100%);
+    /* Un seul dégradé conservé, réservé aux CTA */
+    --gradient-cta: linear-gradient(135deg, hsl(26 68% 36%) 0%, hsl(22 66% 29%) 100%);
 
-    /* Shadows */
-    --shadow-soft: 0 4px 20px -4px hsl(30 20% 20% / 0.1);
-    --shadow-medium: 0 8px 30px -8px hsl(30 20% 20% / 0.15);
-    --shadow-strong: 0 12px 40px -12px hsl(30 20% 20% / 0.2);
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 25 20% 10%;
-    --foreground: 35 25% 95%;
-
-    --card: 25 20% 12%;
-    --card-foreground: 35 25% 95%;
-
-    --popover: 25 20% 12%;
-    --popover-foreground: 35 25% 95%;
-
-    --primary: 35 80% 50%;
-    --primary-foreground: 25 20% 10%;
-
-    --secondary: 25 15% 20%;
-    --secondary-foreground: 35 25% 95%;
-
-    --muted: 25 15% 18%;
-    --muted-foreground: 35 15% 60%;
-
-    --accent: 35 60% 55%;
-    --accent-foreground: 25 20% 10%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 25 15% 20%;
-    --input: 25 15% 20%;
-    --ring: 35 80% 50%;
+    /* Ombres discrètes — utilisées avec parcimonie */
+    --shadow-sm: 0 1px 2px hsl(24 20% 12% / 0.05);
+    --shadow-md: 0 4px 16px -6px hsl(24 20% 12% / 0.12);
+    --shadow-lg: 0 16px 40px -16px hsl(24 20% 12% / 0.22);
   }
 }
 
@@ -100,81 +55,164 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  html {
+    scroll-behavior: smooth;
+    /* Compense l'en-tête fixe quand on saute vers une ancre */
+    scroll-padding-top: 6rem;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display Variable', 'Playfair Display', ui-serif, Georgia, serif;
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif;
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
 @layer components {
+  /* ---------- Layout ---------- */
+
+  .container-custom {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-8;
+  }
+
+  .section {
+    @apply py-16 md:py-24;
+  }
+
+  .section-tight {
+    @apply py-12 md:py-16;
+  }
+
+  /* Largeur de lecture confortable pour les blocs de texte suivi */
+  .prose-measure {
+    @apply max-w-[68ch];
+  }
+
+  /* ---------- Typographie ---------- */
+
+  .eyebrow {
+    @apply inline-block text-xs font-semibold uppercase tracking-[0.14em] text-primary;
+  }
+
+  .h-display {
+    @apply font-serif text-4xl font-bold leading-[1.08] sm:text-5xl lg:text-6xl;
+  }
+
+  .h-section {
+    @apply font-serif text-3xl font-bold leading-[1.15] md:text-4xl;
+  }
+
+  .h-card {
+    @apply font-serif text-xl font-bold leading-snug;
+  }
+
+  .lead {
+    @apply text-lg leading-relaxed text-muted-foreground;
+  }
+
+  /* ---------- Boutons ---------- */
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold;
+    @apply transition-colors duration-200;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-6 py-3 font-semibold text-primary-foreground transition-all duration-300;
+    @apply btn text-primary-foreground;
     background: var(--gradient-cta);
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--shadow-sm);
   }
 
   .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-medium);
+    filter: brightness(1.08);
   }
 
-  .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border-2 border-primary bg-transparent px-6 py-3 font-semibold text-primary transition-all duration-300;
+  .btn-outline {
+    @apply btn border border-border-strong bg-background text-foreground;
   }
 
-  .btn-secondary:hover {
-    @apply bg-primary text-primary-foreground;
+  .btn-outline:hover {
+    @apply bg-surface;
   }
 
-  .section-padding {
-    @apply py-16 md:py-24 px-4 md:px-8;
+  /* Variante sur fond photo/foncé */
+  .btn-ghost-light {
+    @apply btn border border-white/25 bg-white/5 text-white backdrop-blur-sm;
   }
 
-  .container-custom {
-    @apply max-w-7xl mx-auto;
+  .btn-ghost-light:hover {
+    @apply bg-white/15;
   }
 
-  .card-wood {
-    @apply rounded-xl p-6 md:p-8 transition-all duration-300;
-    background: var(--gradient-wood);
-    box-shadow: var(--shadow-soft);
+  /* ---------- Surfaces ---------- */
+
+  /* Carte à plat : bordure 1px, pas de dégradé ni de translation au survol */
+  .card {
+    @apply rounded-xl border border-border bg-card p-6 transition-colors duration-200 md:p-7;
   }
 
-  .card-wood:hover {
-    box-shadow: var(--shadow-medium);
-    transform: translateY(-4px);
+  .card-interactive {
+    @apply card hover:border-border-strong hover:bg-surface;
   }
 
-  .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-cta);
+  .divide-hairline {
+    @apply border-t border-border;
+  }
+}
+
+@layer utilities {
+  .bg-surface {
+    background-color: hsl(var(--surface));
   }
 
-  .hero-overlay {
-    background: linear-gradient(180deg, hsl(25 35% 12% / 0.85) 0%, hsl(25 35% 8% / 0.95) 100%);
+  .bg-surface-strong {
+    background-color: hsl(var(--surface-strong));
   }
 
-  .input-wood {
-    @apply w-full rounded-md border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
+  .bg-primary-soft {
+    background-color: hsl(var(--primary-soft));
   }
 
   .animate-fade-up {
-    animation: fadeUp 0.6s ease-out forwards;
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+    animation: fadeIn 0.4s ease-out both;
   }
 }
 
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;

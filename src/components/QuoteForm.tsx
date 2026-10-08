@@ -1,6 +1,8 @@
+'use client';
+
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Send, CheckCircle, Upload, X, Loader2 } from 'lucide-react';
+import { Send, CheckCircle, Upload, X, Loader2, Check, Phone } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +10,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { PHONE_DISPLAY, PHONE_HREF, type ServiceKey } from '@/lib/site';
+
+/** Mêmes limites que le serveur (server/app.ts : multer). */
+const MAX_PHOTOS = 10;
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+const SERVICE_KEYS: ServiceKey[] = ['floor', 'stairs', 'repair'];
 
 interface FormData {
   firstName: string;
@@ -44,9 +52,11 @@ interface FormErrors {
   [key: string]: string;
 }
 
-const QuoteForm = () => {
+const QuoteForm = ({ defaultService }: { defaultService?: ServiceKey } = {}) => {
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  /** Champ piège : invisible pour les humains, rempli par les robots. */
+  const honeypotRef = useRef<HTMLInputElement>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -58,9 +68,9 @@ const QuoteForm = () => {
     postalCode: '',
     city: '',
     services: {
-      floor: false,
-      stairs: false,
-      repair: false,
+      floor: defaultService === 'floor',
+      stairs: defaultService === 'stairs',
+      repair: defaultService === 'repair',
     },
     floorType: '',
     stairDetails: {
@@ -148,9 +158,10 @@ const QuoteForm = () => {
     if (!validateForm() || isSubmitting) return;
 
     setIsSubmitting(true);
-    const apiBase = import.meta.env.VITE_API_URL ?? '';
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? '';
     const fd = new FormData();
     fd.append('data', JSON.stringify(buildPayload()));
+    fd.append('website', honeypotRef.current?.value ?? '');
     formData.photos.forEach((file) => fd.append('photos', file));
 
     try {
@@ -210,26 +221,38 @@ const QuoteForm = () => {
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const remainingSlots = 10 - formData.photos.length;
-    const newPhotos = files.slice(0, remainingSlots);
-    setFormData(prev => ({ ...prev, photos: [...prev.photos, ...newPhotos] }));
+    // Mêmes limites que le serveur (8 Mo, images) : on refuse avant l'envoi
+    // plutôt que de faire attendre le client pour une erreur 413.
+    const accepted = files.filter((f) => f.type.startsWith('image/') && f.size <= MAX_PHOTO_BYTES);
+    if (accepted.length < files.length) toast.error(t('form.photos.hint'));
+    const remainingSlots = MAX_PHOTOS - formData.photos.length;
+    setFormData((prev) => ({ ...prev, photos: [...prev.photos, ...accepted.slice(0, remainingSlots)] }));
+    // Permet de re-sélectionner le même fichier après l'avoir retiré.
+    e.target.value = '';
   };
 
   const removePhoto = (index: number) => {
-    setFormData(prev => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
+    setFormData((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
   };
 
   if (isSubmitted) {
     return (
-      <section id="quote-form" className="section-padding bg-secondary">
+      <section id="quote-form" className="section bg-surface">
         <div className="container-custom">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="card-wood p-12">
-              <CheckCircle className="w-16 h-16 text-primary mx-auto mb-6" aria-hidden />
-              <p className="font-serif text-2xl md:text-3xl font-bold text-foreground leading-snug">
-                {t('form.success')}
-              </p>
-            </div>
+          <div className="mx-auto max-w-2xl rounded-xl border border-border bg-background p-10 text-center shadow-sm md:p-14">
+            <span className="mx-auto mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft">
+              <CheckCircle className="h-8 w-8 text-primary" aria-hidden />
+            </span>
+            <p className="font-serif text-2xl font-bold leading-snug text-foreground md:text-3xl">
+              {t('form.success')}
+            </p>
+            <a
+              href={PHONE_HREF}
+              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+            >
+              <Phone className="h-4 w-4" aria-hidden />
+              {PHONE_DISPLAY}
+            </a>
           </div>
         </div>
       </section>
@@ -238,258 +261,441 @@ const QuoteForm = () => {
 
   const stairFields = [
     { key: 'marches', label: t('form.stair.marches') },
-    { key: 'barreaux', label: t('form.stair.barreaux') },
     { key: 'contremarches', label: t('form.stair.contremarches') },
+    { key: 'barreaux', label: t('form.stair.barreaux') },
     { key: 'poteaux', label: t('form.stair.poteaux') },
     { key: 'limon', label: t('form.stair.limon') },
     { key: 'fauxLimon', label: t('form.stair.fauxLimon') },
     { key: 'mainCourante', label: t('form.stair.mainCourante') },
   ];
 
+  const fieldError = (name: string) =>
+    errors[name] ? (
+      <p role="alert" className="mt-1.5 text-sm text-destructive">
+        {errors[name]}
+      </p>
+    ) : null;
+
+  const inputClass = 'mt-1.5 h-11 bg-background';
+  const groupTitle =
+    'mb-5 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground';
+
   return (
-    <section id="quote-form" className="section-padding bg-secondary">
-      <div className="container-custom">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
-              {t('form.title')}
-            </h2>
-            <p className="text-muted-foreground text-lg">{t('form.subtitle')}</p>
+    <section id="quote-form" className="section bg-surface">
+      <div className="container-custom grid gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-14">
+        {/* ---------- Colonne d'accompagnement ---------- */}
+        <aside className="lg:sticky lg:top-28 lg:self-start">
+          <p className="eyebrow">{t('form.eyebrow')}</p>
+          <h2 className="h-section mt-3 text-foreground">{t('form.title')}</h2>
+          <p className="lead mt-4">{t('form.subtitle')}</p>
+
+          <ul className="mt-8 space-y-3.5">
+            {['form.aside.point1', 'form.aside.point2', 'form.aside.point3'].map((key) => (
+              <li key={key} className="flex items-start gap-3 text-foreground">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-soft">
+                  <Check className="h-3 w-3 text-primary" aria-hidden />
+                </span>
+                {t(key)}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-8 border-t border-border pt-6">
+            <p className="text-sm text-muted-foreground">{t('form.aside.call')}</p>
+            <a
+              href={PHONE_HREF}
+              className="mt-1.5 inline-flex items-center gap-2 text-xl font-semibold text-foreground transition-colors hover:text-primary"
+            >
+              <Phone className="h-5 w-5 text-primary" aria-hidden />
+              {PHONE_DISPLAY}
+            </a>
+          </div>
+        </aside>
+
+        {/* ---------- Formulaire ---------- */}
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="rounded-xl border border-border bg-background shadow-md"
+        >
+          {/* Champ piège anti-robots : hors écran, ignoré par les lecteurs d’écran et l’autocomplétion. */}
+          <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+            <label htmlFor="website">Site web</label>
+            <input ref={honeypotRef} id="website" name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
           </div>
 
-          <form onSubmit={handleSubmit} className="card-wood space-y-6">
-            {/* Contact Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(['firstName', 'lastName'] as const).map(field => (
-                <div key={field} className="space-y-2">
+          <fieldset className="border-b border-border p-6 md:p-8">
+            <legend className="sr-only">{t('form.group.contact')}</legend>
+            <p aria-hidden="true" className={groupTitle}>
+              {t('form.group.contact')}
+            </p>
+
+            <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
+              {(['firstName', 'lastName'] as const).map((field) => (
+                <div key={field}>
                   <Label htmlFor={field}>{t(`form.${field}`)} *</Label>
-                  <Input id={field} name={field} value={formData[field]} onChange={handleChange} className="bg-background" />
-                  {errors[field] && <p className="text-destructive text-sm">{errors[field]}</p>}
+                  <Input
+                    id={field}
+                    name={field}
+                    autoComplete={field === 'firstName' ? 'given-name' : 'family-name'}
+                    value={formData[field]}
+                    onChange={handleChange}
+                    className={inputClass}
+                    aria-invalid={!!errors[field]}
+                  />
+                  {fieldError(field)}
                 </div>
               ))}
-              <div className="space-y-2">
+
+              <div>
                 <Label htmlFor="phone">{t('form.phone')} *</Label>
-                <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="(450) 123-4567" className="bg-background" />
-                {errors.phone && <p className="text-destructive text-sm">{errors.phone}</p>}
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="(450) 123-4567"
+                  className={inputClass}
+                  aria-invalid={!!errors.phone}
+                />
+                {fieldError('phone')}
               </div>
-              <div className="space-y-2">
+
+              <div>
                 <Label htmlFor="email">{t('form.email')} *</Label>
-                <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} className="bg-background" />
-                {errors.email && <p className="text-destructive text-sm">{errors.email}</p>}
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={inputClass}
+                  aria-invalid={!!errors.email}
+                />
+                {fieldError('email')}
               </div>
-            </div>
 
-            {/* Address */}
-            <div className="space-y-2">
-              <Label htmlFor="address">{t('form.address')} *</Label>
-              <Input id="address" name="address" value={formData.address} onChange={handleChange} className="bg-background" />
-              {errors.address && <p className="text-destructive text-sm">{errors.address}</p>}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="postalCode">{t('form.postalCode')} *</Label>
-                <Input id="postalCode" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="H2X 1Y4" className="bg-background" />
-                {errors.postalCode && <p className="text-destructive text-sm">{errors.postalCode}</p>}
+              <div className="sm:col-span-2">
+                <Label htmlFor="address">{t('form.address')} *</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  autoComplete="street-address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className={inputClass}
+                  aria-invalid={!!errors.address}
+                />
+                {fieldError('address')}
               </div>
-              <div className="space-y-2">
+
+              <div>
                 <Label htmlFor="city">{t('form.city')} *</Label>
-                <Input id="city" name="city" value={formData.city} onChange={handleChange} className="bg-background" />
-                {errors.city && <p className="text-destructive text-sm">{errors.city}</p>}
+                <Input
+                  id="city"
+                  name="city"
+                  autoComplete="address-level2"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className={inputClass}
+                  aria-invalid={!!errors.city}
+                />
+                {fieldError('city')}
+              </div>
+
+              <div>
+                <Label htmlFor="postalCode">{t('form.postalCode')} *</Label>
+                <Input
+                  id="postalCode"
+                  name="postalCode"
+                  autoComplete="postal-code"
+                  value={formData.postalCode}
+                  onChange={handleChange}
+                  placeholder="H2X 1Y4"
+                  className={`${inputClass} uppercase placeholder:normal-case`}
+                  aria-invalid={!!errors.postalCode}
+                />
+                {fieldError('postalCode')}
               </div>
             </div>
+          </fieldset>
 
-            {/* Services */}
-            <div className="space-y-3">
-              <Label>{t('form.servicesTitle')} *</Label>
-              <div className="space-y-3">
-                {/* Floor Sanding */}
-                <div className="flex items-center space-x-3">
-                  <Checkbox id="service-floor" checked={formData.services.floor} onCheckedChange={(checked) => handleServiceChange('floor', checked as boolean)} />
-                  <Label htmlFor="service-floor" className="font-normal cursor-pointer">{t('form.service.floor')}</Label>
+          <fieldset className="border-b border-border p-6 md:p-8">
+            <legend className="sr-only">{t('form.group.project')}</legend>
+            <p aria-hidden="true" className={groupTitle}>
+              {t('form.group.project')}
+            </p>
+
+            <p id="services-label" className="mb-3 text-sm font-medium text-foreground">
+              {t('form.servicesTitle')} *
+            </p>
+
+            {/* Choix du service en cartes : cible tactile plus grande, état coché visible */}
+            <div role="group" aria-labelledby="services-label" className="grid gap-3 sm:grid-cols-3">
+              {SERVICE_KEYS.map((key) => {
+                const checked = formData.services[key];
+                return (
+                  <label
+                    key={key}
+                    htmlFor={`service-${key}`}
+                    className={`flex min-h-[3.5rem] cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-colors ${
+                      checked
+                        ? 'border-primary bg-primary-soft'
+                        : 'border-border hover:border-border-strong hover:bg-surface'
+                    }`}
+                  >
+                    <Checkbox
+                      id={`service-${key}`}
+                      checked={checked}
+                      onCheckedChange={(value) => handleServiceChange(key, value === true)}
+                    />
+                    <span className="text-sm font-medium text-foreground">{t(`form.service.${key}`)}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {fieldError('services')}
+
+            {formData.services.floor && (
+              <div className="animate-fade-in mt-5 space-y-5 rounded-lg border border-border bg-surface p-5">
+                <p className="text-sm font-semibold text-foreground">{t('form.service.floor')}</p>
+                <div>
+                  <Label className="text-sm">{t('form.floorType.label')} *</Label>
+                  <RadioGroup
+                    value={formData.floorType}
+                    onValueChange={(value) => {
+                      setFormData((prev) => ({ ...prev, floorType: value }));
+                      setErrors((prev) => {
+                        if (!prev.floorType) return prev;
+                        const next = { ...prev };
+                        delete next.floorType;
+                        return next;
+                      });
+                    }}
+                    className="mt-2.5 space-y-2.5"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <RadioGroupItem value="regular" id="floor-regular" className="mt-0.5" />
+                      <Label htmlFor="floor-regular" className="cursor-pointer font-normal leading-snug">
+                        {t('form.floorType.regular')}
+                      </Label>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <RadioGroupItem value="prefinished" id="floor-prefinished" className="mt-0.5" />
+                      <Label htmlFor="floor-prefinished" className="cursor-pointer font-normal leading-snug">
+                        {t('form.floorType.prefinished')}
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  {fieldError('floorType')}
                 </div>
-                {/* Floor Type Sub-choice */}
-                {formData.services.floor && (
-                  <div className="ml-7 space-y-3 p-4 bg-muted/50 rounded-lg border border-border">
-                    <Label className="text-sm font-medium">{t('form.floorType.label')}</Label>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <Label htmlFor="area">{t('form.area')} *</Label>
+                    <Input
+                      id="area"
+                      name="area"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={formData.area}
+                      onChange={handleChange}
+                      placeholder="500"
+                      className={inputClass}
+                      aria-invalid={!!errors.area}
+                      aria-describedby="area-help"
+                    />
+                    <p id="area-help" className="mt-1.5 text-xs text-muted-foreground">
+                      {t('form.areaHelper')}
+                    </p>
+                    {fieldError('area')}
+                  </div>
+
+                  <div>
+                    <Label>{t('form.wantColor')}</Label>
                     <RadioGroup
-                      value={formData.floorType}
-                      onValueChange={(value) => {
-                        setFormData(prev => ({ ...prev, floorType: value }));
-                        setErrors((prev) => {
-                          if (!prev.floorType) return prev;
-                          const next = { ...prev };
-                          delete next.floorType;
-                          return next;
-                        });
-                      }}
-                      className="space-y-2"
+                      value={formData.wantColor}
+                      onValueChange={(value) => setFormData((prev) => ({ ...prev, wantColor: value }))}
+                      className="mt-3 flex gap-6"
                     >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="regular" id="floor-regular" />
-                        <Label htmlFor="floor-regular" className="font-normal cursor-pointer">{t('form.floorType.regular')}</Label>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="yes" id="color-yes" />
+                        <Label htmlFor="color-yes" className="cursor-pointer font-normal">
+                          {t('form.colorYes')}
+                        </Label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="prefinished" id="floor-prefinished" />
-                        <Label htmlFor="floor-prefinished" className="font-normal cursor-pointer">{t('form.floorType.prefinished')}</Label>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="no" id="color-no" />
+                        <Label htmlFor="color-no" className="cursor-pointer font-normal">
+                          {t('form.colorNo')}
+                        </Label>
                       </div>
                     </RadioGroup>
-                    <p className="text-xs text-muted-foreground italic">{t('form.floorType.note')}</p>
-                    {errors.floorType && <p className="text-destructive text-sm">{errors.floorType}</p>}
-
-                    <div className="pt-2 space-y-6">
-                      {/* Area */}
-                      <div className="space-y-2">
-                        <Label htmlFor="area">{t('form.area')} *</Label>
-                        <Input
-                          id="area"
-                          name="area"
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          value={formData.area}
-                          onChange={handleChange}
-                          placeholder="Ex: 500"
-                          className="bg-background"
-                        />
-                        <p className="text-sm text-muted-foreground">{t('form.areaHelper')}</p>
-                        <p className="text-sm text-muted-foreground">{t('form.areaExample')}</p>
-                        {errors.area && <p className="text-destructive text-sm">{errors.area}</p>}
-                      </div>
-
-                      {/* Want Color */}
-                      <div className="space-y-3">
-                        <Label>{t('form.wantColor')}</Label>
-                        <RadioGroup
-                          value={formData.wantColor}
-                          onValueChange={(value) => setFormData((prev) => ({ ...prev, wantColor: value }))}
-                          className="flex gap-6"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="yes" id="color-yes" />
-                            <Label htmlFor="color-yes" className="font-normal cursor-pointer">
-                              {t('form.colorYes')}
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="no" id="color-no" />
-                            <Label htmlFor="color-no" className="font-normal cursor-pointer">
-                              {t('form.colorNo')}
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-
-                      {/* Photo Upload */}
-                      <div className="space-y-3">
-                        <Label>{t('form.photos')}</Label>
-                        <p className="text-sm text-muted-foreground">{t('form.photosMax')}</p>
-                        <div
-                          className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                          <p className="text-muted-foreground">{formData.photos.length}/10</p>
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handlePhotoUpload}
-                            className="hidden"
-                            disabled={formData.photos.length >= 10}
-                          />
-                        </div>
-                        {formData.photos.length > 0 && (
-                          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
-                            {formData.photos.map((photo, index) => (
-                              <div key={index} className="relative aspect-square bg-muted rounded-lg overflow-hidden">
-                                <img
-                                  src={URL.createObjectURL(photo)}
-                                  alt={`Photo ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removePhoto(index)}
-                                  className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <p className="text-xs text-muted-foreground">{t('form.uploadNote')}</p>
-                      </div>
-                    </div>
                   </div>
-                )}
-
-                {/* Stair Sanding */}
-                <div className="flex items-center space-x-3">
-                  <Checkbox id="service-stairs" checked={formData.services.stairs} onCheckedChange={(checked) => handleServiceChange('stairs', checked as boolean)} />
-                  <Label htmlFor="service-stairs" className="font-normal cursor-pointer">{t('form.service.stairs')}</Label>
-                </div>
-                {/* Stair Detail Fields */}
-                {formData.services.stairs && (
-                  <div className="ml-7 space-y-3 p-4 bg-muted/50 rounded-lg border border-border">
-                    <Label className="text-sm font-medium">{t('form.stair.detailsLabel')}</Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {stairFields.map(({ key, label }) => (
-                        <div key={key} className="space-y-1">
-                          <Label htmlFor={`stair-${key}`} className="text-sm font-normal">{label}</Label>
-                          <Input
-                            id={`stair-${key}`}
-                            type="number"
-                            min="0"
-                            value={formData.stairDetails[key as keyof typeof formData.stairDetails]}
-                            onChange={(e) => handleStairDetailChange(key, e.target.value)}
-                            className="bg-background"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Floor Repair */}
-                <div className="flex items-center space-x-3">
-                  <Checkbox id="service-repair" checked={formData.services.repair} onCheckedChange={(checked) => handleServiceChange('repair', checked as boolean)} />
-                  <Label htmlFor="service-repair" className="font-normal cursor-pointer">{t('form.service.repair')}</Label>
                 </div>
               </div>
-              {errors.services && <p className="text-destructive text-sm">{errors.services}</p>}
-            </div>
+            )}
 
-            {/* Date */}
-            <div className="space-y-2">
-              <Label htmlFor="date">{t('form.date')} *</Label>
-              <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} className="bg-background" />
-              {errors.date && <p className="text-destructive text-sm">{errors.date}</p>}
-            </div>
+            {formData.services.stairs && (
+              <div className="animate-fade-in mt-5 rounded-lg border border-border bg-surface p-5">
+                <p className="text-sm font-semibold text-foreground">{t('form.stair.detailsLabel')}</p>
+                <div className="mt-4 grid gap-x-4 gap-y-4 sm:grid-cols-2">
+                  {stairFields.map(({ key, label }) => (
+                    <div key={key}>
+                      <Label htmlFor={`stair-${key}`} className="text-sm font-normal">
+                        {label}
+                      </Label>
+                      <Input
+                        id={`stair-${key}`}
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        value={formData.stairDetails[key as keyof typeof formData.stairDetails]}
+                        onChange={(e) => handleStairDetailChange(key, e.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-            {/* Details */}
-            <div className="space-y-2">
-              <Label htmlFor="details">{t('form.details')}</Label>
-              <Textarea id="details" name="details" value={formData.details} onChange={handleChange} rows={4} className="bg-background resize-none" />
-            </div>
+            <div className="mt-6 grid gap-5">
+              <div className="sm:max-w-[50%] sm:pr-2">
+                <Label htmlFor="date">{t('form.date')} *</Label>
+                <Input
+                  id="date"
+                  name="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  className={inputClass}
+                  aria-invalid={!!errors.date}
+                />
+                {fieldError('date')}
+              </div>
 
-            {/* Special Needs */}
-            <div className="space-y-2">
-              <Label htmlFor="specialNeeds">{t('form.specialNeeds')}</Label>
-              <Textarea id="specialNeeds" name="specialNeeds" value={formData.specialNeeds} onChange={handleChange} rows={3} className="bg-background resize-none" />
-            </div>
+              <div>
+                <Label htmlFor="details">{t('form.details')}</Label>
+                <Textarea
+                  id="details"
+                  name="details"
+                  value={formData.details}
+                  onChange={handleChange}
+                  placeholder={t('form.detailsPlaceholder')}
+                  rows={4}
+                  className="mt-1.5 resize-y bg-background"
+                />
+              </div>
 
-            {/* Submit */}
-            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+              <div>
+                <Label htmlFor="specialNeeds">{t('form.specialNeeds')}</Label>
+                <Textarea
+                  id="specialNeeds"
+                  name="specialNeeds"
+                  value={formData.specialNeeds}
+                  onChange={handleChange}
+                  rows={2}
+                  className="mt-1.5 resize-y bg-background"
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          {/* Au niveau supérieur : les photos sont utiles pour les trois services. */}
+          <fieldset className="p-6 md:p-8">
+            <legend className="sr-only">{t('form.group.photos')}</legend>
+            <p aria-hidden="true" className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {t('form.group.photos')}
+            </p>
+            <p className="mb-4 text-sm text-muted-foreground">{t('form.photos')}</p>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={formData.photos.length >= MAX_PHOTOS}
+              className="flex w-full items-center gap-4 rounded-lg border-2 border-dashed border-border p-5 text-left transition-colors hover:border-primary hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft">
+                <Upload className="h-5 w-5 text-primary" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-foreground">{t('form.photos.cta')}</span>
+                <span className="block text-xs text-muted-foreground">{t('form.photos.hint')}</span>
+              </span>
+              {formData.photos.length > 0 && (
+                <span className="text-sm font-medium tabular-nums text-muted-foreground">
+                  {formData.photos.length}/{MAX_PHOTOS}
+                </span>
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handlePhotoUpload}
+              className="hidden"
+              disabled={formData.photos.length >= MAX_PHOTOS}
+            />
+
+            {formData.photos.length > 0 && (
+              <>
+                <ul className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-5">
+                  {formData.photos.map((photo, index) => (
+                    <li
+                      key={`${photo.name}-${photo.lastModified}-${index}`}
+                      className="relative aspect-square overflow-hidden rounded-lg bg-muted"
+                    >
+                      <PhotoThumb file={photo} />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-destructive"
+                        aria-label={`${t('form.photos.remove')} ${index + 1}`}
+                      >
+                        <X className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs text-muted-foreground">{t('form.uploadNote')}</p>
+              </>
+            )}
+
+            <Button type="submit" size="lg" className="mt-7 h-12 w-full text-base" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+              ) : (
+                <Send className="h-5 w-5" aria-hidden />
+              )}
               {isSubmitting ? t('form.submitting') : t('form.submit')}
             </Button>
-          </form>
-        </div>
+          </fieldset>
+        </form>
       </div>
     </section>
   );
+};
+
+/**
+ * Aperçu d'une photo choisie. L'URL temporaire est créée une seule fois et
+ * libérée au démontage — l'ancien code en recréait une à chaque rendu.
+ */
+const PhotoThumb = ({ file }: { file: File }) => {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+
+  return url ? <img src={url} alt="" className="h-full w-full object-cover" /> : null;
 };
 
 export default QuoteForm;

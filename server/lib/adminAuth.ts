@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import type { Request, Response, NextFunction } from 'express';
+import type { Request } from 'express';
 
 function readBearerToken(req: Request): string | null {
   const h = req.headers.authorization;
@@ -27,18 +27,4 @@ export function isAdminAuthorized(req: Request): boolean {
   const got = readBearerToken(req);
   if (!got) return false;
   return timingSafeStringEqual(got, expected);
-}
-
-export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
-  if (!getExpectedAdminToken()) {
-    res.status(503).json({
-      error: 'Configuration serveur incomplète : définissez ADMIN_API_TOKEN (secret fort, jamais dans le front).',
-    });
-    return;
-  }
-  if (!isAdminAuthorized(req)) {
-    res.status(401).json({ error: 'Non autorisé.' });
-    return;
-  }
-  next();
 }

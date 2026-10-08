@@ -1,49 +1,48 @@
-import { Award, Eye, Clock, FileText, ThumbsUp, Star } from 'lucide-react';
+'use client';
+
+import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { WHY_PHOTO } from '@/lib/photos';
+
+const REASONS = ['quality', 'detail', 'timing', 'transparency', 'satisfaction', 'experience'];
 
 const WhyUs = () => {
-  const { t } = useLanguage();
-
-  const reasons = [
-    { icon: Award, titleKey: 'why.quality.title', descriptionKey: 'why.quality.description' },
-    { icon: Eye, titleKey: 'why.detail.title', descriptionKey: 'why.detail.description' },
-    { icon: Clock, titleKey: 'why.timing.title', descriptionKey: 'why.timing.description' },
-    { icon: FileText, titleKey: 'why.transparency.title', descriptionKey: 'why.transparency.description' },
-    { icon: ThumbsUp, titleKey: 'why.satisfaction.title', descriptionKey: 'why.satisfaction.description' },
-    { icon: Star, titleKey: 'why.experience.title', descriptionKey: 'why.experience.description' },
-  ];
+  const { language, t } = useLanguage();
 
   return (
-    <section id="why-us" className="section-padding bg-accent text-accent-foreground">
-      <div className="container-custom">
-        {/* Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            {t('why.title')}
-          </h2>
-          <p className="text-accent-foreground/90 text-lg max-w-2xl mx-auto">
-            {t('why.subtitle')}
-          </p>
+    <section id="why-us" className="section bg-accent text-accent-foreground">
+      <div className="container-custom grid items-center gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+        {/* Une vraie photo de l'équipe au travail : plus parlant qu'une grille d'icônes */}
+        <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-white/5 sm:aspect-[4/3] lg:aspect-[4/5]">
+          <Image
+            src={WHY_PHOTO.src}
+            alt={WHY_PHOTO.alt[language]}
+            fill
+            sizes="(min-width: 1024px) 40vw, 100vw"
+            className="object-cover"
+          />
         </div>
 
-        {/* Reasons Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {reasons.map((reason, index) => (
-            <div
-              key={index}
-              className="p-6 rounded-xl bg-accent-foreground/5 hover:bg-accent-foreground/10 transition-colors"
-            >
-              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
-                <reason.icon className="w-6 h-6 text-primary" />
+        <div>
+          <p className="eyebrow text-white/60">{t('why.eyebrow')}</p>
+          <h2 className="h-section mt-3">{t('why.title')}</h2>
+          <p className="lead mt-4 text-accent-foreground/75">{t('why.subtitle')}</p>
+
+          <dl className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+            {REASONS.map((key, index) => (
+              <div key={key} className="border-t border-white/15 pt-5">
+                <dt className="flex items-baseline gap-3">
+                  <span className="text-xs font-semibold tabular-nums text-white/45">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className="font-serif text-lg font-bold">{t(`why.${key}.title`)}</span>
+                </dt>
+                <dd className="mt-2 text-sm leading-relaxed text-accent-foreground/70">
+                  {t(`why.${key}.description`)}
+                </dd>
               </div>
-              <h3 className="font-serif text-xl font-bold mb-2">
-                {t(reason.titleKey)}
-              </h3>
-              <p className="text-accent-foreground/90">
-                {t(reason.descriptionKey)}
-              </p>
-            </div>
-          ))}
+            ))}
+          </dl>
         </div>
       </div>
     </section>

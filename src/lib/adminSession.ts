@@ -17,7 +17,7 @@ export function clearStoredAdminToken(): void {
 }
 
 function apiBase(): string {
-  return (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 }
 
 /** Requêtes authentifiées vers l’API admin (Bearer). */

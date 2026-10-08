@@ -1,90 +1,74 @@
-import { Layers, Footprints, Wrench, ArrowRight } from 'lucide-react';
+'use client';
+
+import Link from 'next/link';
+import Image from 'next/image';
+import { ArrowRight, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SectionHeading from '@/components/SectionHeading';
+import { SERVICE_PHOTOS } from '@/lib/photos';
+import { SERVICE_PAGES, servicePath } from '@/lib/site';
 
 const Services = () => {
-  const { t } = useLanguage();
-
-  const scrollToForm = () => {
-    const element = document.getElementById('quote-form');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const services = [
-    {
-      icon: Layers,
-      titleKey: 'services.floor.title',
-      descriptionKey: 'services.floor.description',
-      benefitsKey: 'services.floor.benefits',
-    },
-    {
-      icon: Footprints,
-      titleKey: 'services.stairs.title',
-      descriptionKey: 'services.stairs.description',
-      benefitsKey: 'services.stairs.benefits',
-    },
-    {
-      icon: Wrench,
-      titleKey: 'services.repair.title',
-      descriptionKey: 'services.repair.description',
-      benefitsKey: 'services.repair.benefits',
-    },
-  ];
+  const { language, t } = useLanguage();
 
   return (
-    <section id="services" className="section-padding bg-background">
+    <section id="services" className="section bg-background">
       <div className="container-custom">
-        {/* Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            {t('services.title')}
-          </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {t('services.subtitle')}
-          </p>
-        </div>
+        <SectionHeading
+          eyebrow={t('services.eyebrow')}
+          title={t('services.title')}
+          lead={t('services.subtitle')}
+        />
 
-        {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          {services.map((service, index) => (
-            <div
-              key={index}
-              className="card-wood group cursor-pointer"
-              onClick={scrollToForm}
-            >
-              {/* Icon */}
-              <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <service.icon className="w-7 h-7 text-primary" />
-              </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          {SERVICE_PAGES.map((service) => {
+            const photo = SERVICE_PHOTOS[service.key].cover;
+            return (
+              <Link
+                key={service.key}
+                href={servicePath(service, language)}
+                className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors duration-200 hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <div className="relative aspect-[3/2] overflow-hidden bg-surface-strong">
+                  <Image
+                    src={photo.src}
+                    alt={photo.alt[language]}
+                    fill
+                    sizes="(min-width: 768px) 33vw, 100vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                </div>
 
-              {/* Title */}
-              <h3 className="font-serif text-xl md:text-2xl font-bold text-foreground mb-4">
-                {t(service.titleKey)}
-              </h3>
+                {/* flex-1 + mt-auto : le lien reste aligné en bas, quelle que soit la longueur du texte */}
+                <div className="flex flex-1 flex-col p-6 md:p-7">
+                  <h3 className="h-card text-foreground">{t(`services.${service.key}.title`)}</h3>
 
-              {/* Description */}
-              <p className="text-muted-foreground mb-6">
-                {t(service.descriptionKey)}
-              </p>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    {t(`services.${service.key}.description`)}
+                  </p>
 
-              {/* Benefits */}
-              <ul className="space-y-2 mb-6">
-                {t(service.benefitsKey).split(' • ').map((benefit, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                    {benefit}
-                  </li>
-                ))}
-              </ul>
+                  <ul className="mt-5 space-y-2">
+                    {t(`services.${service.key}.benefits`)
+                      .split(' • ')
+                      .map((benefit) => (
+                        <li key={benefit} className="flex items-start gap-2.5 text-sm text-foreground">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                          {benefit}
+                        </li>
+                      ))}
+                  </ul>
 
-              {/* CTA */}
-              <div className="flex items-center gap-2 text-primary font-semibold group-hover:gap-3 transition-all">
-                {t('services.cta')}
-                <ArrowRight className="w-4 h-4" />
-              </div>
-            </div>
-          ))}
+                  <span className="mt-auto inline-flex items-center gap-1.5 pt-6 text-sm font-semibold text-primary">
+                    {t('services.learnMore')}
+                    <ArrowRight
+                      className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

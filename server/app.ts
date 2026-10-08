@@ -8,10 +8,13 @@ import { parseQuotePayload } from './lib/quoteSchema.js';
 import adminRoutes from './routes/admin.js';
 import { buildEstimate } from './lib/estimate.js';
 import { generateQuoteExcel } from './lib/excelQuote.js';
+import { generateQuotePdf } from './lib/pdfQuote.js';
 import { sendQuoteEmails, MailConfigError } from './lib/mailer.js';
 import { insertSubmission } from './lib/submissionsDb.js';
 import { getNextSubmissionId, isSupabaseMode } from './lib/submissionsStore.js';
 import { persistQuoteToSupabase } from './lib/supabaseSubmissions.js';
+import { createRateLimiter, isAllowedImageUpload } from './lib/security.js';
+import { COMPANY } from './config/company.js';
 import { UPLOAD_ROOT } from './paths.js';
 
 export function ensureUploadDirs() {
@@ -21,6 +24,14 @@ export function ensureUploadDirs() {
 function clientError(res: express.Response, status: number, message: string, code?: string) {
   return res.status(status).json({ error: { message, code: code ?? 'ERROR' } });
 }
+
+/** Détails techniques visibles seulement en dev, ou si QUOTE_VERBOSE_ERRORS est activé. */
+function showErrorDetail(): boolean {
+  const verbose = process.env.QUOTE_VERBOSE_ERRORS?.trim().toLowerCase();
+  return process.env.NODE_ENV !== 'production' || verbose === '1' || verbose === 'true';
+}
+
+const GENERIC_SEND_ERROR = `L’envoi est temporairement indisponible. Veuillez réessayer plus tard ou nous appeler au ${COMPANY.phone}.`;
 
 /**
  * Sous Windows, renommer tout le dossier temporaire après Multer provoque souvent EPERM
@@ -70,6 +81,12 @@ function moveSessionFilesToSubmission(tempDir: string, finalDir: string): void {
 export function createApp() {
   const app = express();
 
+  // Ne pas annoncer la technologie du serveur.
+  app.disable('x-powered-by');
+  // Render place l'API derrière un proxy : sans ceci, toutes les requêtes
+  // auraient l'IP du proxy et la limitation de débit bloquerait tout le monde.
+  app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1));
+
   const frontendOrigin = process.env.FRONTEND_ORIGIN;
   app.use(
     cors({
@@ -78,12 +95,14 @@ export function createApp() {
           ? frontendOrigin.split(',').map((o) => o.trim())
           : true,
       credentials: false,
+      methods: ['GET', 'POST', 'DELETE'],
       allowedHeaders: ['Content-Type', 'Authorization'],
     }),
   );
 
   app.use((_req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
     next();
   });
 
@@ -104,16 +123,22 @@ export function createApp() {
       cb(null, dir);
     },
     filename: (_req, file, cb) => {
-      const base = path.basename(file.originalname).replace(/[^\w.-]+/g, '_');
+      // Caractères sûrs uniquement, et jamais « .. » (refusé ensuite par l'historique).
+      const base = path
+        .basename(file.originalname)
+        .replace(/[^\w.-]+/g, '_')
+        .replace(/\.{2,}/g, '.')
+        .slice(-120);
       cb(null, `${Date.now()}-${base}`);
     },
   });
 
   const upload = multer({
     storage,
-    limits: { fileSize: 8 * 1024 * 1024, files: 10 },
+    limits: { fileSize: 8 * 1024 * 1024, files: 10, fields: 10, fieldSize: 64 * 1024 },
     fileFilter: (_req, file, cb) => {
-      if (!file.mimetype.startsWith('image/')) {
+      // Le type MIME est déclaré par le navigateur : on exige aussi une extension d'image.
+      if (!isAllowedImageUpload(file.originalname, file.mimetype)) {
         cb(new Error('Seules les images sont acceptées.'));
         return;
       }
@@ -121,9 +146,21 @@ export function createApp() {
     },
   });
 
+  /**
+   * Un client légitime envoie une demande ; 8 par quart d'heure laisse de la
+   * marge pour les erreurs de saisie tout en bloquant l'envoi en rafale (qui
+   * remplirait la boîte courriel, le quota Resend et le stockage).
+   */
+  const quoteLimiter = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    max: 8,
+    message: `Trop de demandes envoyées. Veuillez réessayer plus tard ou nous appeler au ${COMPANY.phone}.`,
+  });
+
   app.post(
     '/api/quote',
-    (req, res, next) => {
+    (req, res, next) => quoteLimiter.middleware(req, res, next),
+    (req, _res, next) => {
       (req as express.Request & { uploadSessionId: string }).uploadSessionId = randomUUID();
       next();
     },
@@ -153,6 +190,15 @@ export function createApp() {
           /* ignore */
         }
       };
+
+      // Champ piège invisible pour les humains : un robot qui remplit tout le
+      // formulaire le remplit aussi. On répond « succès » sans rien enregistrer,
+      // pour ne pas lui indiquer qu'il a été détecté.
+      if (typeof req.body?.website === 'string' && req.body.website.trim() !== '') {
+        cleanupTemp();
+        console.warn('[quote] envoi ignoré (champ piège rempli)');
+        return res.status(201).json({ ok: true, submissionId: 'EST-0000-0000', message: 'Soumission envoyée.' });
+      }
 
       try {
         let raw: unknown;
@@ -211,8 +257,17 @@ export function createApp() {
           payload,
           estimate,
         });
+        fs.writeFileSync(path.join(finalDir, 'quote.xlsx'), excelBuffer);
 
-        // Save metadata + Excel locally
+        // PDF : un échec ne doit pas bloquer la demande — l'Excel suffit à la traiter.
+        let pdfBuffer: Buffer | null = null;
+        try {
+          pdfBuffer = await generateQuotePdf({ submissionId, createdAt, payload, estimate, photoPaths });
+          fs.writeFileSync(path.join(finalDir, 'quote.pdf'), pdfBuffer);
+        } catch (e) {
+          console.error('[quote] génération du PDF', e);
+        }
+
         const meta = {
           submissionId,
           createdAt: createdAt.toISOString(),
@@ -226,16 +281,16 @@ export function createApp() {
           photos: files.map((f) => path.basename(f.path)),
         };
 
-        fs.writeFileSync(path.join(finalDir, 'quote.xlsx'), excelBuffer);
-
         const mailFrom = process.env.MAIL_FROM || 'sablage@talonplancher.com';
         const mailInternal = process.env.MAIL_TO_INTERNAL || 'sablage@talonplancher.com';
+        const clientName = `${payload.firstName} ${payload.lastName}`.trim();
 
         if (isSupabaseMode()) {
           const photoAttachments = files.map((f) => {
             const name = path.basename(f.path);
             return { filename: name, buffer: fs.readFileSync(path.join(finalDir, name)) };
           });
+          // Envoie tout le dossier (photos, quote.xlsx, quote.pdf) vers le stockage.
           await persistQuoteToSupabase(meta, finalDir);
           await sendQuoteEmails({
             clientEmail: payload.email,
@@ -243,9 +298,10 @@ export function createApp() {
             fromAddress: mailFrom,
             submissionId,
             excelBuffer,
+            pdfBuffer,
             photoPaths: [],
             photoAttachments,
-            clientName: `${payload.firstName} ${payload.lastName}`.trim(),
+            clientName,
           });
           try {
             fs.rmSync(finalDir, { recursive: true, force: true });
@@ -261,8 +317,9 @@ export function createApp() {
             fromAddress: mailFrom,
             submissionId,
             excelBuffer,
+            pdfBuffer,
             photoPaths,
-            clientName: `${payload.firstName} ${payload.lastName}`.trim(),
+            clientName,
           });
           try {
             insertSubmission(meta);
@@ -286,54 +343,45 @@ export function createApp() {
         if (err.message?.includes('Seules les images')) {
           return clientError(res, 400, err.message, 'INVALID_FILE');
         }
-        if (err instanceof MailConfigError) {
-          return clientError(res, 503, err.message, 'EMAIL_NOT_CONFIGURED');
-        }
+
+        // Erreurs de configuration ou de quota Resend : le détail reste dans les
+        // journaux du serveur, le visiteur ne voit qu'un message neutre.
+        console.error('[quote]', err);
+        const detail = showErrorDetail();
         const errMsg = err.message ?? '';
-        if (/domain is not verified/i.test(errMsg) || /verify your domain/i.test(errMsg)) {
+        if (err instanceof MailConfigError) {
+          return clientError(res, 503, detail ? err.message : GENERIC_SEND_ERROR, 'EMAIL_NOT_CONFIGURED');
+        }
+        if (/domain is not verified|verify your domain/i.test(errMsg)) {
           return clientError(
             res,
             503,
-            'Le domaine de l’adresse d’envoi (MAIL_FROM) n’est pas vérifié dans Resend. Ajoutez ce domaine et complétez la vérification DNS sur https://resend.com/domains.',
+            detail
+              ? 'Le domaine de l’adresse d’envoi (MAIL_FROM) n’est pas vérifié dans Resend : complétez la vérification DNS sur https://resend.com/domains.'
+              : GENERIC_SEND_ERROR,
             'RESEND_DOMAIN_NOT_VERIFIED',
           );
         }
-        if (
-          /\[resend:invalid_api_key\]|\[resend:missing_api_key\]/i.test(errMsg) ||
-          /invalid api key/i.test(errMsg)
-        ) {
+        if (/\[resend:(invalid_api_key|missing_api_key|restricted_api_key)\]|invalid api key/i.test(errMsg)) {
           return clientError(
             res,
             503,
-            'Clé API Resend refusée ou absente. Vérifiez RESEND_API_KEY dans les variables d’environnement du service (Render).',
+            detail ? 'Clé API Resend refusée, absente ou restreinte : vérifiez RESEND_API_KEY.' : GENERIC_SEND_ERROR,
             'RESEND_API_KEY_INVALID',
           );
         }
-        if (/\[resend:restricted_api_key\]/i.test(errMsg)) {
+        if (/\[resend:(monthly_quota_exceeded|daily_quota_exceeded|rate_limit_exceeded)\]/i.test(errMsg)) {
           return clientError(
             res,
             503,
-            'Cette clé Resend est restreinte et ne permet pas l’envoi. Créez une clé « Full access » ou adaptez les permissions sur resend.com/api-keys.',
-            'RESEND_API_KEY_RESTRICTED',
-          );
-        }
-        if (/\[resend:monthly_quota_exceeded\]|\[resend:daily_quota_exceeded\]|\[resend:rate_limit_exceeded\]/i.test(errMsg)) {
-          return clientError(
-            res,
-            503,
-            'Quota ou limite d’envoi Resend atteint. Réessayez plus tard ou vérifiez votre forfait sur resend.com.',
+            detail ? 'Quota ou limite d’envoi Resend atteint.' : GENERIC_SEND_ERROR,
             'RESEND_QUOTA',
           );
         }
-        console.error('[quote]', err);
-        const verbose =
-          process.env.QUOTE_VERBOSE_ERRORS?.trim() === '1' ||
-          process.env.QUOTE_VERBOSE_ERRORS?.trim().toLowerCase() === 'true';
-        const showDetail = process.env.NODE_ENV !== 'production' || verbose;
         return clientError(
           res,
           500,
-          showDetail ? err.message || 'Erreur serveur' : 'Une erreur est survenue. Veuillez réessayer plus tard.',
+          detail ? errMsg || 'Erreur serveur' : 'Une erreur est survenue. Veuillez réessayer plus tard.',
           'SERVER',
         );
       }
@@ -341,7 +389,17 @@ export function createApp() {
   );
 
   app.use(
-    (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    (err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      // Téléversement refusé en cours de route : les fichiers déjà reçus ne
+      // doivent pas s'accumuler dans uploads/temp.
+      const sessionId = (req as express.Request & { uploadSessionId?: string }).uploadSessionId;
+      if (sessionId) {
+        try {
+          fs.rmSync(path.join(UPLOAD_ROOT, 'temp', sessionId), { recursive: true, force: true });
+        } catch {
+          /* best-effort */
+        }
+      }
       if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
           return clientError(res, 413, 'Chaque photo doit faire au plus 8 Mo.', 'FILE_TOO_LARGE');
@@ -354,11 +412,10 @@ export function createApp() {
       if (err instanceof Error && err.message.includes('Seules les images')) {
         return clientError(res, 400, err.message, 'INVALID_FILE');
       }
-      if (err instanceof Error) {
-        console.error('[api]', err);
-        return clientError(res, 500, err.message || 'Erreur serveur', 'SERVER');
-      }
-      return clientError(res, 500, 'Erreur serveur', 'SERVER');
+      console.error('[api]', err);
+      // Auparavant, err.message partait tel quel au visiteur, même en production.
+      const message = showErrorDetail() && err instanceof Error ? err.message : 'Erreur serveur';
+      return clientError(res, 500, message, 'SERVER');
     },
   );
 

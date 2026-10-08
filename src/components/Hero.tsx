@@ -1,104 +1,90 @@
-import { useLayoutEffect } from 'react';
-import { ArrowRight, Phone } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+'use client';
 
-const HERO_BG_WIDTH = 1376;
-const HERO_BG_HEIGHT = 768;
+import Image from 'next/image';
+import { ArrowRight, Phone, Check } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useSectionNav } from '@/hooks/useSectionNav';
+import { HERO_PHOTO } from '@/lib/photos';
+import { PHONE_DISPLAY, PHONE_HREF } from '@/lib/site';
+
+const TRUST = ['hero.trust.quote', 'hero.trust.guarantee', 'hero.trust.equipment'];
 
 const Hero = () => {
-  const { t } = useLanguage();
-
-  useLayoutEffect(() => {
-    const id = 'hero-preload-bg-avif';
-    if (document.getElementById(id)) return;
-    const link = document.createElement('link');
-    link.id = id;
-    link.rel = 'preload';
-    link.as = 'image';
-    link.href = '/background.avif';
-    link.type = 'image/avif';
-    link.setAttribute('fetchpriority', 'high');
-    document.head.appendChild(link);
-    return () => {
-      link.remove();
-    };
-  }, []);
-
-  const scrollToForm = () => {
-    const element = document.getElementById('quote-form');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  const { language, t } = useLanguage();
+  const { hrefFor, handleClick } = useSectionNav();
 
   return (
-    <section className="relative min-h-screen flex items-center pt-20">
-      {/* Background — real <img> for LCP (fetchpriority + dimensions); AVIF/WebP with PNG fallback */}
-      <div className="absolute inset-0 overflow-hidden">
-        <picture className="absolute inset-0 block">
-          <source srcSet="/background.avif" type="image/avif" />
-          <source srcSet="/background.webp" type="image/webp" />
-          <img
-            src="/background.png"
-            alt=""
-            width={HERO_BG_WIDTH}
-            height={HERO_BG_HEIGHT}
-            className="absolute inset-0 h-full w-full object-cover object-left"
-            fetchPriority="high"
-            decoding="async"
-            sizes="100vw"
-          />
-        </picture>
-        <div className="absolute inset-0 bg-black/65" aria-hidden />
-      </div>
-      {/* Content */}
-      <div className="relative z-10 container-custom px-4 py-16 md:py-24">
-        <div className="max-w-3xl">
-          <span className="inline-block px-4 py-2 bg-primary/20 text-primary-foreground rounded-full text-sm font-medium mb-6 animate-fade-up">
+    <section className="relative isolate flex min-h-[88svh] items-center overflow-hidden pt-16 md:pt-20">
+      {/* Photo d'un vrai chantier. priority = préchargée, c'est l'élément LCP. */}
+      <Image
+        src={HERO_PHOTO.src}
+        alt={HERO_PHOTO.alt[language]}
+        fill
+        priority
+        sizes="100vw"
+        quality={80}
+        className="-z-20 object-cover object-[55%_38%]"
+      />
+      {/* Dégradé pondéré à gauche : le texte reste lisible, la photo respire */}
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background:
+            'linear-gradient(95deg, hsl(24 30% 7% / 0.92) 0%, hsl(24 30% 7% / 0.78) 38%, hsl(24 30% 7% / 0.35) 70%, hsl(24 30% 7% / 0.15) 100%)',
+        }}
+        aria-hidden
+      />
+
+      <div className="container-custom py-20 md:py-28">
+        <div className="max-w-2xl">
+          <p className="animate-fade-up text-xs font-semibold uppercase tracking-[0.16em] text-white/70">
             {t('hero.subtitle')}
-          </span>
+          </p>
 
           <h1
-            className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 animate-fade-up"
-            style={{ animationDelay: '0.1s' }}
+            className="h-display animate-fade-up mt-5 text-white"
+            style={{ animationDelay: '60ms' }}
           >
             {t('hero.title')}
           </h1>
 
           <p
-            className="text-lg md:text-xl text-white/80 mb-8 max-w-2xl animate-fade-up"
-            style={{ animationDelay: '0.2s' }}
+            className="animate-fade-up mt-6 max-w-xl text-lg leading-relaxed text-white/85"
+            style={{ animationDelay: '120ms' }}
           >
             {t('hero.description')}
           </p>
 
           <div
-            className="flex flex-col sm:flex-row gap-4 animate-fade-up"
-            style={{ animationDelay: '0.3s' }}
+            className="animate-fade-up mt-9 flex flex-col gap-3 sm:flex-row"
+            style={{ animationDelay: '180ms' }}
           >
-            <button
-              onClick={scrollToForm}
-              className="btn-primary text-base px-8 py-4"
+            <a
+              href={hrefFor('quote-form')}
+              onClick={handleClick('quote-form')}
+              className="btn-primary px-7 py-3.5 text-base"
             >
               {t('hero.cta.quote')}
-              <ArrowRight className="w-5 h-5" />
-            </button>
+              <ArrowRight className="h-5 w-5" aria-hidden />
+            </a>
 
-            <a
-              href="tel:+14508093491"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white/30 text-white rounded-md font-semibold hover:bg-white/10 transition-all duration-300"
-            >
-              <Phone className="w-5 h-5" />
-              {t('hero.cta.call')}
+            <a href={PHONE_HREF} className="btn-ghost-light px-7 py-3.5 text-base">
+              <Phone className="h-5 w-5" aria-hidden />
+              {PHONE_DISPLAY}
             </a>
           </div>
-        </div>
-      </div>
 
-      {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
-          <div className="w-1.5 h-3 bg-white/50 rounded-full" />
+          <ul
+            className="animate-fade-up mt-10 flex flex-wrap gap-x-6 gap-y-3 border-t border-white/15 pt-6"
+            style={{ animationDelay: '240ms' }}
+          >
+            {TRUST.map((key) => (
+              <li key={key} className="flex items-center gap-2 text-sm font-medium text-white/85">
+                <Check className="h-4 w-4 shrink-0 text-white" aria-hidden />
+                {t(key)}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

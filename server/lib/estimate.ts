@@ -10,6 +10,10 @@ export type EstimateLine = {
   description: string;
   detail: string;
   amount: number | null;
+  /** Champs structurés pour le PDF — absents quand le montant est « sur évaluation ». */
+  quantity?: number;
+  unit?: string;
+  unitPrice?: number;
 };
 
 export type EstimateResult = {
@@ -61,6 +65,9 @@ function computeStairEstimate(sd: QuotePayload['stairDetails']): { lines: Estima
       description: `Escalier — ${cfg.label}`,
       detail,
       amount,
+      quantity: qty,
+      unit: cfg.per === 'pi_lin' ? 'pi lin.' : 'unité',
+      unitPrice: cfg.ratePerUnit,
     });
   });
 
@@ -105,6 +112,9 @@ export function buildEstimate(payload: QuotePayload): EstimateResult {
         description: 'Sablage de plancher (estimation)',
         detail: detailParts.join(' — '),
         amount,
+        quantity: sqft,
+        unit: 'pi²',
+        unitPrice: effectiveRate,
       });
     } else {
       lines.push({

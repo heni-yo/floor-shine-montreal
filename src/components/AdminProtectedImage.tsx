@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from "react";
 import { adminFetch } from "@/lib/adminSession";
 import { cn } from "@/lib/utils";

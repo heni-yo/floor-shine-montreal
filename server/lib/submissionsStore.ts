@@ -1,7 +1,7 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import { UPLOAD_ROOT } from '../paths.js';
 import { nextSubmissionNumber } from './submissionNumber.js';
+import { resolveInside } from './security.js';
 import {
   deleteSubmissionFromSupabase,
   downloadSubmissionFileFromSupabase,
@@ -21,6 +21,12 @@ export type { SubmissionMeta };
 
 export { isSupabaseMode };
 
+/**
+ * Tous les accès disque passent par resolveInside : même si une validation
+ * en amont était contournée, aucun chemin ne peut sortir de UPLOAD_ROOT.
+ */
+const submissionDir = (id: string) => resolveInside(UPLOAD_ROOT, id);
+
 export async function getNextSubmissionId(): Promise<string> {
   if (isSupabaseMode()) return getNextSubmissionIdFromSupabase();
   return nextSubmissionNumber();
@@ -33,24 +39,26 @@ export async function listSubmissions(): Promise<SubmissionMeta[]> {
 
 export async function listSubmissionFiles(id: string): Promise<string[]> {
   if (isSupabaseMode()) return listFilesInSubmissionStorage(id);
-  const dir = path.join(UPLOAD_ROOT, id);
+  const dir = submissionDir(id);
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir).filter((f) => f !== 'meta.json');
 }
 
 export async function readSubmissionFile(id: string, filename: string): Promise<Buffer> {
   if (isSupabaseMode()) return downloadSubmissionFileFromSupabase(id, filename);
-  return fs.readFileSync(path.join(UPLOAD_ROOT, id, filename));
+  return fs.readFileSync(resolveInside(UPLOAD_ROOT, id, filename));
 }
 
 export async function submissionExists(id: string): Promise<boolean> {
   if (isSupabaseMode()) return submissionExistsInSupabase(id);
-  return fs.existsSync(path.join(UPLOAD_ROOT, id));
+  return fs.existsSync(submissionDir(id));
 }
 
 export async function deleteSubmissionEverywhere(id: string): Promise<boolean> {
   if (isSupabaseMode()) return deleteSubmissionFromSupabase(id);
-  const dir = path.join(UPLOAD_ROOT, id);
+  const dir = submissionDir(id);
+  // Garde-fou supplémentaire : on ne supprime jamais la racine elle-même.
+  if (dir === resolveInside(UPLOAD_ROOT)) throw new Error('Suppression de la racine refusée');
   if (!fs.existsSync(dir)) return false;
   fs.rmSync(dir, { recursive: true, force: true });
   try {

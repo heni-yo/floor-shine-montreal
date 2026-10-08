@@ -1,75 +1,52 @@
+'use client';
+
 import { useState, useCallback, useEffect } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import Image from 'next/image';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
-import { ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight, X, Expand } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import SectionHeading from '@/components/SectionHeading';
+import { GALLERY as photos } from '@/lib/photos';
 
-const images = [
-  '/img/IMG_0108.jpg',
-  '/img/IMG_0518.jpg',
-  '/img/IMG_0522.jpg',
-  '/img/IMG_0689.jpg',
-  '/img/IMG_1200.jpg',
-  '/img/IMG_1266.jpg',
-  '/img/IMG_1536.jpg',
-  '/img/IMG_1688.jpg',
-  '/img/IMG_2525.jpg',
-  '/img/IMG_3799.jpg',
-  '/img/IMG_3816.jpg',
-  '/img/IMG_7166.jpg',
-  '/img/IMG_7221.jpg',
-  '/img/IMG_7227.jpg',
-  '/img/IMG_7896.jpg',
-  '/img/IMG_9029.jpg',
-  '/img/IMG_9033.jpg',
-  '/img/231dbf24-3148-4628-826b-eba9c48d90f3.jpg',
-  '/img/3b974c5a-ecd9-4525-9207-5c43c6726e74.jpg',
-  '/img/5672a966-d1b0-47e9-b6e5-afa6de936a7c.jpg',
-  '/img/b9b23967-ef82-44d8-9faa-7d0e535bf409.jpg',
-];
+/** Tailles réelles d'affichage : évite de télécharger du 2048 px pour une tuile. */
+const SLIDE_SIZES = '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw';
 
 const Gallery = () => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: true, align: 'start', slidesToScroll: 1 },
-    [Autoplay({ delay: 3500, stopOnInteraction: false, stopOnMouseEnter: true })]
-  );
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'start' }, [
+    Autoplay({ delay: 4500, stopOnInteraction: false, stopOnMouseEnter: true }),
+  ]);
 
   const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
+    if (emblaApi) setSelectedIndex(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
 
   useEffect(() => {
     if (!emblaApi) return;
     onSelect();
     emblaApi.on('select', onSelect);
-    return () => { emblaApi.off('select', onSelect); };
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
   }, [emblaApi, onSelect]);
 
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+  const isOpen = lightboxIndex !== null;
+  const step = useCallback(
+    (delta: number) =>
+      setLightboxIndex((i) => (i === null ? i : (i + delta + photos.length) % photos.length)),
+    [],
+  );
 
-  const openLightbox = (index: number) => {
-    setLightboxIndex(index);
-    setLightboxOpen(true);
-  };
-
-  const lightboxPrev = () => setLightboxIndex((prev) => (prev - 1 + images.length) % images.length);
-  const lightboxNext = () => setLightboxIndex((prev) => (prev + 1) % images.length);
-
-  // Keyboard navigation for lightbox
   useEffect(() => {
-    if (!lightboxOpen) return;
+    if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setLightboxOpen(false);
-      if (e.key === 'ArrowLeft') lightboxPrev();
-      if (e.key === 'ArrowRight') lightboxNext();
+      if (e.key === 'Escape') setLightboxIndex(null);
+      if (e.key === 'ArrowLeft') step(-1);
+      if (e.key === 'ArrowRight') step(1);
     };
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handler);
@@ -77,168 +54,152 @@ const Gallery = () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', handler);
     };
-  }, [lightboxOpen]);
+  }, [isOpen, step]);
 
-  // Dot indicators - show groups
-  const totalDots = images.length;
-  const visibleDots = 7;
-  const startDot = Math.max(0, Math.min(selectedIndex - Math.floor(visibleDots / 2), totalDots - visibleDots));
-  const dotsToShow = Array.from({ length: Math.min(visibleDots, totalDots) }, (_, i) => startDot + i);
+  const navButton =
+    'absolute top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-md transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
   return (
-    <section id="gallery" className="section-padding bg-secondary">
+    <section id="gallery" className="section bg-background">
       <div className="container-custom">
-        {/* Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            {t('gallery.title')}
-          </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {t('gallery.subtitle')}
-          </p>
-        </div>
+        <SectionHeading
+          eyebrow={t('gallery.eyebrow')}
+          title={t('gallery.title')}
+          lead={t('gallery.subtitle')}
+        />
 
-        {/* Carousel */}
-        <div className="relative group">
-          <div className="overflow-hidden rounded-xl" ref={emblaRef}>
-            <div className="flex">
-              {images.map((src, index) => (
+        <div className="relative">
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="-ml-4 flex">
+              {photos.map((photo, index) => (
                 <div
-                  key={index}
-                  className="flex-[0_0_100%] min-w-0 md:flex-[0_0_50%] lg:flex-[0_0_33.333%] px-2"
+                  key={photo.src}
+                  className="min-w-0 flex-[0_0_100%] pl-4 sm:flex-[0_0_50%] lg:flex-[0_0_33.333%]"
                 >
-                  <div
-                    className="relative aspect-[4/3] overflow-hidden rounded-lg cursor-pointer group/item"
-                    onClick={() => openLightbox(index)}
+                  <button
+                    type="button"
+                    onClick={() => setLightboxIndex(index)}
+                    className="group relative block aspect-[4/5] w-full overflow-hidden rounded-xl bg-surface-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    aria-label={`${t('gallery.aria.open')} : ${photo.alt[language]}`}
                   >
-                    <img
-                      src={src}
-                      alt={`Sablage de plancher Montréal – Réalisation TALON PLANCHER ${index + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-105"
-                      loading="lazy"
+                    <Image
+                      src={photo.src}
+                      alt={photo.alt[language]}
+                      fill
+                      sizes={SLIDE_SIZES}
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      loading={index < 3 ? 'eager' : 'lazy'}
                     />
-                    <div className="absolute inset-0 bg-foreground/0 group-hover/item:bg-foreground/20 transition-colors duration-300 flex items-center justify-center">
-                      <ZoomIn className="w-8 h-8 text-background opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 drop-shadow-lg" />
-                    </div>
-                  </div>
+                    <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/45 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                      <Expand className="h-4 w-4 text-white" aria-hidden />
+                    </span>
+                  </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Navigation Arrows */}
+          {/* Flèches visibles en permanence sur desktop, pour signaler que la galerie défile */}
           <button
-            onClick={scrollPrev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:bg-background transition-all opacity-0 group-hover:opacity-100"
-            aria-label="Previous"
+            type="button"
+            onClick={() => emblaApi?.scrollPrev()}
+            className={`${navButton} -left-5 hidden md:inline-flex`}
+            aria-label={t('gallery.aria.prev')}
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="h-5 w-5" aria-hidden />
           </button>
           <button
-            onClick={scrollNext}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm border border-border flex items-center justify-center text-foreground hover:bg-background transition-all opacity-0 group-hover:opacity-100"
-            aria-label="Next"
+            type="button"
+            onClick={() => emblaApi?.scrollNext()}
+            className={`${navButton} -right-5 hidden md:inline-flex`}
+            aria-label={t('gallery.aria.next')}
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="h-5 w-5" aria-hidden />
           </button>
         </div>
 
-        {/* Dot Indicators */}
-        <div className="flex justify-center gap-1 mt-6" role="group" aria-label={t('gallery.carouselLabel')}>
-          {dotsToShow.map((dotIndex) => (
+        <div
+          className="mt-8 flex justify-center gap-1.5"
+          role="group"
+          aria-label={t('gallery.carouselLabel')}
+        >
+          {photos.map((photo, index) => (
             <button
-              key={dotIndex}
+              key={photo.src}
               type="button"
-              onClick={() => emblaApi?.scrollTo(dotIndex)}
-              className={cn(
-                'inline-flex h-11 min-w-11 items-center justify-center rounded-full p-2 transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-              )}
-              aria-label={`${t('gallery.aria.slideNav')} ${dotIndex + 1}`}
-              aria-current={dotIndex === selectedIndex ? 'true' : undefined}
+              onClick={() => emblaApi?.scrollTo(index)}
+              className="inline-flex h-8 items-center justify-center px-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label={`${t('gallery.aria.slideNav')} ${index + 1}`}
+              aria-current={index === selectedIndex ? 'true' : undefined}
             >
               <span
-                className={cn(
-                  'block rounded-full transition-all duration-300',
-                  dotIndex === selectedIndex
-                    ? 'h-2 w-6 bg-primary'
-                    : 'h-2 w-2 bg-muted-foreground/45 hover:bg-muted-foreground/65'
-                )}
+                className={`block h-1.5 rounded-full transition-all duration-300 ${
+                  index === selectedIndex ? 'w-6 bg-primary' : 'w-1.5 bg-border-strong'
+                }`}
                 aria-hidden
-              />
-            </button>
-          ))}
-        </div>
-
-        {/* Thumbnail Grid */}
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-10 gap-2 mt-8">
-          {images.map((src, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                emblaApi?.scrollTo(index);
-                openLightbox(index);
-              }}
-              className={cn(
-                'aspect-square rounded-md overflow-hidden border-2 transition-all duration-200',
-                selectedIndex === index
-                  ? 'border-primary ring-2 ring-primary/30'
-                  : 'border-transparent hover:border-primary/50 opacity-70 hover:opacity-100'
-              )}
-            >
-              <img
-                src={src}
-                alt={`Thumbnail ${index + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
               />
             </button>
           ))}
         </div>
       </div>
 
-      {/* Lightbox */}
-      {lightboxOpen && (
+      {isOpen && lightboxIndex !== null && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
-          onClick={() => setLightboxOpen(false)}
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 p-4"
+          onClick={() => setLightboxIndex(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={photos[lightboxIndex].alt[language]}
         >
-          {/* Close button */}
           <button
-            onClick={() => setLightboxOpen(false)}
-            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-            aria-label="Close"
+            type="button"
+            onClick={() => setLightboxIndex(null)}
+            className="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+            aria-label={t('gallery.aria.close')}
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" aria-hidden />
           </button>
 
-          {/* Counter */}
-          <div className="absolute top-4 left-4 text-white/70 text-sm font-medium">
-            {lightboxIndex + 1} / {images.length}
-          </div>
+          <span className="absolute left-5 top-6 text-sm font-medium tabular-nums text-white/60">
+            {lightboxIndex + 1} / {photos.length}
+          </span>
 
-          {/* Image */}
-          <img
-            src={images[lightboxIndex]}
-            alt={`${t('gallery.title')} ${lightboxIndex + 1}`}
-            className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <figure className="flex w-full max-w-5xl flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <div className="relative h-[78vh] w-full">
+              <Image
+                src={photos[lightboxIndex].src}
+                alt={photos[lightboxIndex].alt[language]}
+                fill
+                sizes="100vw"
+                className="object-contain"
+              />
+            </div>
+            <figcaption className="mt-4 text-center text-sm text-white/70">
+              {photos[lightboxIndex].alt[language]}
+            </figcaption>
+          </figure>
 
-          {/* Lightbox Navigation */}
           <button
-            onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-            aria-label="Previous image"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              step(-1);
+            }}
+            className="absolute left-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+            aria-label={t('gallery.aria.prev')}
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="h-6 w-6" aria-hidden />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-            aria-label="Next image"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              step(1);
+            }}
+            className="absolute right-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+            aria-label={t('gallery.aria.next')}
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="h-6 w-6" aria-hidden />
           </button>
         </div>
       )}

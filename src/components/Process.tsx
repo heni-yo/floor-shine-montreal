@@ -1,61 +1,56 @@
+'use client';
+
 import { ClipboardCheck, Shield, Disc, Paintbrush, CheckCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SectionHeading from '@/components/SectionHeading';
+
+const STEPS = [
+  { icon: ClipboardCheck, step: 1 },
+  { icon: Shield, step: 2 },
+  { icon: Disc, step: 3 },
+  { icon: Paintbrush, step: 4 },
+  { icon: CheckCircle, step: 5 },
+];
 
 const Process = () => {
   const { t } = useLanguage();
 
-  const steps = [
-    { icon: ClipboardCheck, titleKey: 'process.step1.title', descriptionKey: 'process.step1.description', number: '01' },
-    { icon: Shield, titleKey: 'process.step2.title', descriptionKey: 'process.step2.description', number: '02' },
-    { icon: Disc, titleKey: 'process.step3.title', descriptionKey: 'process.step3.description', number: '03' },
-    { icon: Paintbrush, titleKey: 'process.step4.title', descriptionKey: 'process.step4.description', number: '04' },
-    { icon: CheckCircle, titleKey: 'process.step5.title', descriptionKey: 'process.step5.description', number: '05' },
-  ];
-
   return (
-    <section id="process" className="section-padding bg-background">
+    <section id="process" className="section bg-surface">
       <div className="container-custom">
-        {/* Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-            {t('process.title')}
-          </h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {t('process.subtitle')}
-          </p>
-        </div>
+        <SectionHeading
+          eyebrow={t('process.eyebrow')}
+          title={t('process.title')}
+          lead={t('process.subtitle')}
+        />
 
-        {/* Steps */}
-        <div className="relative">
-          {/* Connection Line - Desktop */}
-          <div className="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-border" />
+        <ol className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6">
+          {STEPS.map(({ icon: Icon, step }) => (
+            <li key={step} className="relative">
+              {/* Filet de liaison entre les étapes (desktop) */}
+              <span
+                className="absolute left-11 right-0 top-5 hidden h-px bg-border lg:block"
+                aria-hidden
+              />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-4">
-            {steps.map((step, index) => (
-              <div key={index} className="relative text-center">
-                {/* Number Badge */}
-                <div className="relative z-10 w-16 h-16 mx-auto rounded-full bg-primary flex items-center justify-center mb-6">
-                  <span className="text-primary-foreground font-bold text-lg">{step.number}</span>
-                </div>
-
-                {/* Icon */}
-                <div className="w-12 h-12 mx-auto rounded-lg bg-secondary flex items-center justify-center mb-4">
-                  <step.icon className="w-6 h-6 text-primary" />
-                </div>
-
-                {/* Title */}
-                <h3 className="font-serif text-lg font-bold text-foreground mb-2">
-                  {t(step.titleKey)}
-                </h3>
-
-                {/* Description */}
-                <p className="text-muted-foreground text-sm">
-                  {t(step.descriptionKey)}
-                </p>
+              <div className="relative flex items-center gap-3">
+                <span className="relative z-10 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-background">
+                  <Icon className="h-[18px] w-[18px] text-primary" aria-hidden />
+                </span>
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {String(step).padStart(2, '0')}
+                </span>
               </div>
-            ))}
-          </div>
-        </div>
+
+              <h3 className="mt-4 font-serif text-lg font-bold text-foreground">
+                {t(`process.step${step}.title`)}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {t(`process.step${step}.description`)}
+              </p>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

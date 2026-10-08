@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import fs from 'node:fs';
 import path from 'node:path';
+import { stripControlChars } from './security.js';
 
 /** Levée quand l’envoi réel est demandé mais Resend n’est pas configuré. */
 export class MailConfigError extends Error {
@@ -43,6 +44,8 @@ export async function sendQuoteEmails(params: {
   fromAddress: string;
   submissionId: string;
   excelBuffer: Buffer;
+  /** Absent si la génération du PDF a échoué : le courriel part quand même avec l’Excel. */
+  pdfBuffer?: Buffer | null;
   photoPaths: string[];
   /** Prioritaire sur photoPaths (évite dépendre du disque après envoi Supabase). */
   photoAttachments?: { filename: string; buffer: Buffer }[];
@@ -54,17 +57,19 @@ export async function sendQuoteEmails(params: {
     fromAddress,
     submissionId,
     excelBuffer,
+    pdfBuffer,
     photoPaths,
     photoAttachments,
-    clientName,
   } = params;
+  // Le nom vient du formulaire : pas de retour de ligne possible dans l’objet du courriel.
+  const clientName = stripControlChars(params.clientName);
 
   const photoCount = photoAttachments?.length ?? photoPaths.length;
 
   if (isSkipEmailMode()) {
     console.warn('[mail] SKIP_EMAIL activé — aucun courriel envoyé.');
     console.warn(
-      `[mail] Soumission ${submissionId} | client: ${clientEmail} | interne: ${internalEmail} | Excel: ${excelBuffer.length} o | photos: ${photoCount}`,
+      `[mail] Soumission ${submissionId} | client: ${clientEmail} | interne: ${internalEmail} | PDF: ${pdfBuffer?.length ?? 'absent'} o | Excel: ${excelBuffer.length} o | photos: ${photoCount}`,
     );
     return;
   }
@@ -120,7 +125,11 @@ export async function sendQuoteEmails(params: {
     replyTo: internalEmail,
     subject: `[Soumission] ${submissionId} — ${clientName}`,
     text: internalText,
-    attachments: [{ filename: excelName, content: excelBase64 }, ...imageAttachments],
+    attachments: [
+      ...(pdfBuffer ? [{ filename: `Soumission-${submissionId}.pdf`, content: pdfBuffer.toString('base64') }] : []),
+      { filename: excelName, content: excelBase64 },
+      ...imageAttachments,
+    ],
   });
   if (internalResult.error) {
     throw new Error(resendErrorMessage(internalResult.error));

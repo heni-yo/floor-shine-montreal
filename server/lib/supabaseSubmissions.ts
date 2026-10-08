@@ -31,6 +31,7 @@ function guessMime(name: string): string {
   if (n.endsWith('.xlsx')) {
     return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   }
+  if (n.endsWith('.pdf')) return 'application/pdf';
   if (n.endsWith('.png')) return 'image/png';
   if (n.endsWith('.jpg') || n.endsWith('.jpeg')) return 'image/jpeg';
   if (n.endsWith('.gif')) return 'image/gif';
