@@ -48,6 +48,22 @@ export function isAllowedImageUpload(originalName: string, mimetype: string): bo
   return mimetype.startsWith('image/') && IMAGE_EXTENSIONS.has(path.extname(originalName).toLowerCase());
 }
 
+const IP_LIKE = /^[0-9a-fA-F:.]{3,45}$/;
+
+/**
+ * IP réelle du visiteur. Sur Render, l'API est derrière Cloudflare puis le
+ * proxy de Render : req.ip donnerait au mieux l'adresse d'un serveur
+ * Cloudflare, partagée par de nombreux visiteurs (un seul compteur pour tout
+ * Montréal). Cloudflare inscrit la vraie IP dans CF-Connecting-IP et écrase
+ * toute valeur envoyée par le client ; hors Cloudflare (en local), on retombe
+ * sur req.ip.
+ */
+export function clientIp(req: Request): string {
+  const cf = req.headers['cf-connecting-ip'];
+  if (typeof cf === 'string' && IP_LIKE.test(cf.trim())) return cf.trim();
+  return req.ip || req.socket.remoteAddress || 'inconnu';
+}
+
 type Bucket = { count: number; resetAt: number };
 
 /**
@@ -63,7 +79,7 @@ export function createRateLimiter(options: { windowMs: number; max: number; mess
     for (const [key, bucket] of buckets) if (bucket.resetAt <= now) buckets.delete(key);
   }, options.windowMs).unref();
 
-  const keyOf = (req: Request) => req.ip || req.socket.remoteAddress || 'inconnu';
+  const keyOf = clientIp;
 
   const isBlocked = (req: Request): number => {
     const bucket = buckets.get(keyOf(req));
