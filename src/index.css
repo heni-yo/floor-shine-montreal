@@ -228,3 +228,17 @@
     opacity: 1;
   }
 }
+
+/* ---------- Impression (soumission du calculateur admin) ---------- */
+@media print {
+  @page {
+    size: letter;
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

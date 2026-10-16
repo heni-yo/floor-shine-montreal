@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Loader2,
   Inbox,
+  Calculator,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,8 +44,13 @@ import {
   setStoredAdminToken,
 } from '@/lib/adminSession';
 import { AdminProtectedImage } from '@/components/AdminProtectedImage';
+import QuoteCalculator, { type QuoteSeed } from '@/components/QuoteCalculator';
 
 type ServiceKey = 'floor' | 'stairs' | 'repair';
+type Tab = 'history' | 'calculator';
+
+/** L'onglet est reflété dans l'adresse (#calculateur) pour l'ouvrir directement. */
+const CALCULATOR_HASH = '#calculateur';
 
 interface Submission {
   submissionId: string;
@@ -212,10 +218,12 @@ function SubmissionDetails({
   submission,
   onClose,
   onDeleted,
+  onPrepareQuote,
 }: {
   submission: Submission | null;
   onClose: () => void;
   onDeleted: (id: string) => void;
+  onPrepareQuote: (submission: Submission) => void;
 }) {
   const { toast } = useToast();
   const [files, setFiles] = useState<string[] | null>(null);
@@ -341,9 +349,14 @@ function SubmissionDetails({
                   </p>
                 </section>
 
-                <section>
-                  <h3 className="mb-2 font-sans text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Services</h3>
-                  <ServiceBadges submission={submission} />
+                <section className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h3 className="mb-2 font-sans text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Services</h3>
+                    <ServiceBadges submission={submission} />
+                  </div>
+                  <Button size="sm" onClick={() => onPrepareQuote(submission)}>
+                    <Calculator className="h-4 w-4" aria-hidden /> Préparer le prix
+                  </Button>
                 </section>
 
                 <section>
@@ -500,8 +513,43 @@ export default function AdminHistory() {
   const [search, setSearch] = useState('');
   const [serviceFilter, setServiceFilter] = useState<ServiceKey | 'all'>('all');
   const [selected, setSelected] = useState<Submission | null>(null);
+  const [tab, setTab] = useState<Tab>('history');
+  const [quoteSeed, setQuoteSeed] = useState<QuoteSeed | null>(null);
 
   const { toast } = useToast();
+
+  // Le bouton « retour » du téléphone ramène du calculateur à la liste.
+  useEffect(() => {
+    const sync = () => setTab(window.location.hash === CALCULATOR_HASH ? 'calculator' : 'history');
+    sync();
+    window.addEventListener('popstate', sync);
+    window.addEventListener('hashchange', sync);
+    return () => {
+      window.removeEventListener('popstate', sync);
+      window.removeEventListener('hashchange', sync);
+    };
+  }, []);
+
+  const switchTab = (next: Tab) => {
+    if (next === tab) return;
+    setTab(next);
+    const { pathname, search } = window.location;
+    window.history.pushState(null, '', next === 'calculator' ? `${pathname}${search}${CALCULATOR_HASH}` : `${pathname}${search}`);
+    window.scrollTo({ top: 0 });
+  };
+
+  const prepareQuote = (s: Submission) => {
+    setSelected(null);
+    setQuoteSeed({
+      submissionId: s.submissionId,
+      name: fullName(s),
+      phone: s.phone,
+      email: s.email,
+      address: [s.city, s.postalCode?.toUpperCase()].filter(Boolean).join(' '),
+      services: s.services ?? {},
+    });
+    switchTab('calculator');
+  };
   const { deferredPrompt, runInstall } = useHistoryPwa();
   const isIOS = useMemo(() => typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent), []);
 
@@ -608,18 +656,36 @@ export default function AdminHistory() {
   if (!authed) return <AdminLogin onSubmit={handleLogin} error={loginError} hint={apiConfigHint} />;
 
   return (
-    <div className="min-h-screen bg-surface">
-      <header className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-4">
-            <img src="/logoNav.svg" alt="Talon Plancher" width={1058} height={251} className="h-9 w-auto" />
-            <span className="hidden h-6 w-px bg-border sm:block" aria-hidden />
-            <h1 className="hidden font-sans text-sm font-semibold text-foreground sm:block">Historique des soumissions</h1>
-          </div>
+    <div className="min-h-screen bg-surface print:min-h-0 print:bg-white">
+      <header className="border-b border-border bg-background print:hidden">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-3 sm:px-6">
+          <img src="/logoNav.svg" alt="Talon Plancher" width={1058} height={251} className="h-9 w-auto" />
+          <nav aria-label="Espace administration" className="order-last flex w-full gap-1 sm:order-none sm:mr-auto sm:w-auto">
+            {(
+              [
+                ['history', 'Soumissions', Inbox],
+                ['calculator', 'Calculateur', Calculator],
+              ] as const
+            ).map(([key, label, Icon]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => switchTab(key)}
+                aria-current={tab === key ? 'page' : undefined}
+                className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none ${
+                  tab === key ? 'bg-primary-soft text-primary' : 'text-muted-foreground hover:bg-surface hover:text-foreground'
+                }`}
+              >
+                <Icon className="h-4 w-4" aria-hidden /> {label}
+              </button>
+            ))}
+          </nav>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} aria-hidden /> Actualiser
-            </Button>
+            {tab === 'history' && (
+              <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} aria-hidden /> Actualiser
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={logout}>
               <LogOut className="h-4 w-4" aria-hidden /> <span className="hidden sm:inline">Déconnexion</span>
             </Button>
@@ -627,171 +693,178 @@ export default function AdminHistory() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-        <h1 className="mb-5 font-serif text-2xl font-bold text-foreground sm:hidden">Soumissions</h1>
-
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="Total" value={stats.total} />
-          <Stat label="Ce mois-ci" value={stats.month} />
-          <Stat label="7 derniers jours" value={stats.week} />
-          <Stat label="Avec photos" value={stats.withPhotos} />
-        </div>
-
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1 sm:max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input
-              placeholder="Nom, courriel, téléphone, ville, numéro…"
-              aria-label="Rechercher une soumission"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-10 bg-background pl-9"
-            />
-          </div>
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par service">
-            {(['all', ...SERVICE_KEYS] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setServiceFilter(key)}
-                aria-pressed={serviceFilter === key}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                  serviceFilter === key
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-background text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {key === 'all' ? 'Tous' : SERVICE_LABEL[key]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <p className="mt-4 text-xs text-muted-foreground" aria-live="polite">
-          {filtered.length} soumission{filtered.length > 1 ? 's' : ''}
-          {filtered.length !== submissions.length ? ` sur ${submissions.length}` : ''}
-        </p>
-
-        {filtered.length === 0 ? (
-          <div className="mt-3 flex flex-col items-center rounded-xl border border-dashed border-border bg-background px-6 py-16 text-center">
-            <Inbox className="h-8 w-8 text-muted-foreground" aria-hidden />
-            <p className="mt-3 font-medium text-foreground">
-              {submissions.length ? 'Aucun résultat pour ces critères.' : 'Aucune soumission pour l’instant.'}
-            </p>
-          </div>
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 print:max-w-none print:p-0">
+        {tab === 'calculator' ? (
+          <QuoteCalculator seed={quoteSeed} onSeedConsumed={() => setQuoteSeed(null)} />
         ) : (
           <>
-            {/* Ordinateur : tableau */}
-            <div className="mt-3 hidden overflow-hidden rounded-xl border border-border bg-background md:block">
-              <table className="w-full text-sm">
-                <thead className="border-b border-border bg-surface text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3">Client</th>
-                    <th className="px-4 py-3">Services</th>
-                    <th className="px-4 py-3">Ville</th>
-                    <th className="px-4 py-3">Reçue</th>
-                    <th className="px-4 py-3 text-right">Photos</th>
-                    <th className="w-10 px-4 py-3" aria-label="Ouvrir" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filtered.map((s) => (
-                    <tr
-                      key={s.submissionId}
-                      onClick={() => setSelected(s)}
-                      className="cursor-pointer transition-colors hover:bg-surface"
-                    >
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelected(s);
-                          }}
-                          className="text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                        >
-                          <span className="block font-medium text-foreground">{fullName(s) || 'Sans nom'}</span>
-                          <span className="font-mono text-xs text-muted-foreground">{s.submissionId}</span>
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <ServiceBadges submission={s} />
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.city}</td>
-                      <td className="px-4 py-3">
-                        <span className="block text-foreground">{formatDateTime(s.createdAt)}</span>
-                        <span className="text-xs text-muted-foreground">{relativeTime(s.createdAt)}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{s.photos?.length ?? 0}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        <ChevronRight className="h-4 w-4" aria-hidden />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <h1 className="mb-5 font-serif text-2xl font-bold text-foreground sm:hidden">Soumissions</h1>
+
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <Stat label="Total" value={stats.total} />
+              <Stat label="Ce mois-ci" value={stats.month} />
+              <Stat label="7 derniers jours" value={stats.week} />
+              <Stat label="Avec photos" value={stats.withPhotos} />
             </div>
 
-            {/* Téléphone : cartes */}
-            <ul className="mt-3 space-y-2 md:hidden">
-              {filtered.map((s) => (
-                <li key={s.submissionId}>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative flex-1 sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                <Input
+                  placeholder="Nom, courriel, téléphone, ville, numéro…"
+                  aria-label="Rechercher une soumission"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-10 bg-background pl-9"
+                />
+              </div>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par service">
+                {(['all', ...SERVICE_KEYS] as const).map((key) => (
                   <button
+                    key={key}
                     type="button"
-                    onClick={() => setSelected(s)}
-                    className="w-full rounded-xl border border-border bg-background p-4 text-left transition-colors active:bg-surface"
+                    onClick={() => setServiceFilter(key)}
+                    aria-pressed={serviceFilter === key}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      serviceFilter === key
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-background text-muted-foreground hover:text-foreground'
+                    }`}
                   >
-                    <span className="flex items-start justify-between gap-3">
-                      <span className="min-w-0">
-                        <span className="block truncate font-medium text-foreground">{fullName(s) || 'Sans nom'}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {s.city} · {relativeTime(s.createdAt)}
-                        </span>
-                      </span>
-                      <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                    </span>
-                    <span className="mt-3 flex items-center justify-between gap-2">
-                      <ServiceBadges submission={s} />
-                      <span className="font-mono text-[11px] text-muted-foreground">{s.submissionId}</span>
-                    </span>
+                    {key === 'all' ? 'Tous' : SERVICE_LABEL[key]}
                   </button>
-                </li>
-              ))}
-            </ul>
+                ))}
+              </div>
+            </div>
+
+            <p className="mt-4 text-xs text-muted-foreground" aria-live="polite">
+              {filtered.length} soumission{filtered.length > 1 ? 's' : ''}
+              {filtered.length !== submissions.length ? ` sur ${submissions.length}` : ''}
+            </p>
+
+            {filtered.length === 0 ? (
+              <div className="mt-3 flex flex-col items-center rounded-xl border border-dashed border-border bg-background px-6 py-16 text-center">
+                <Inbox className="h-8 w-8 text-muted-foreground" aria-hidden />
+                <p className="mt-3 font-medium text-foreground">
+                  {submissions.length ? 'Aucun résultat pour ces critères.' : 'Aucune soumission pour l’instant.'}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Ordinateur : tableau */}
+                <div className="mt-3 hidden overflow-hidden rounded-xl border border-border bg-background md:block">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-border bg-surface text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <tr>
+                        <th className="px-4 py-3">Client</th>
+                        <th className="px-4 py-3">Services</th>
+                        <th className="px-4 py-3">Ville</th>
+                        <th className="px-4 py-3">Reçue</th>
+                        <th className="px-4 py-3 text-right">Photos</th>
+                        <th className="w-10 px-4 py-3" aria-label="Ouvrir" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filtered.map((s) => (
+                        <tr
+                          key={s.submissionId}
+                          onClick={() => setSelected(s)}
+                          className="cursor-pointer transition-colors hover:bg-surface"
+                        >
+                          <td className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelected(s);
+                              }}
+                              className="text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                            >
+                              <span className="block font-medium text-foreground">{fullName(s) || 'Sans nom'}</span>
+                              <span className="font-mono text-xs text-muted-foreground">{s.submissionId}</span>
+                            </button>
+                          </td>
+                          <td className="px-4 py-3">
+                            <ServiceBadges submission={s} />
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{s.city}</td>
+                          <td className="px-4 py-3">
+                            <span className="block text-foreground">{formatDateTime(s.createdAt)}</span>
+                            <span className="text-xs text-muted-foreground">{relativeTime(s.createdAt)}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{s.photos?.length ?? 0}</td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            <ChevronRight className="h-4 w-4" aria-hidden />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Téléphone : cartes */}
+                <ul className="mt-3 space-y-2 md:hidden">
+                  {filtered.map((s) => (
+                    <li key={s.submissionId}>
+                      <button
+                        type="button"
+                        onClick={() => setSelected(s)}
+                        className="w-full rounded-xl border border-border bg-background p-4 text-left transition-colors active:bg-surface"
+                      >
+                        <span className="flex items-start justify-between gap-3">
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium text-foreground">{fullName(s) || 'Sans nom'}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {s.city} · {relativeTime(s.createdAt)}
+                            </span>
+                          </span>
+                          <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                        </span>
+                        <span className="mt-3 flex items-center justify-between gap-2">
+                          <ServiceBadges submission={s} />
+                          <span className="font-mono text-[11px] text-muted-foreground">{s.submissionId}</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            <Collapsible className="mt-10 rounded-xl border border-border bg-background">
+              <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors hover:bg-surface [&[data-state=open]>svg]:rotate-180">
+                <span className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4 text-primary" aria-hidden />
+                  Installer cette page sur votre téléphone
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" aria-hidden />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-3 border-t border-border px-4 pb-4 pt-3 text-sm text-muted-foreground">
+                <p>Ajoutez l’historique à votre écran d’accueil pour l’ouvrir comme une application.</p>
+                {deferredPrompt ? (
+                  <Button type="button" size="sm" onClick={() => void runInstall()}>
+                    Ajouter à l’écran d’accueil
+                  </Button>
+                ) : isIOS ? (
+                  <ol className="list-inside list-decimal space-y-1 text-foreground/90">
+                    <li>Ouvrez cette page dans <strong>Safari</strong>.</li>
+                    <li>Touchez <strong>Partager</strong>.</li>
+                    <li>Choisissez <strong>Sur l’écran d’accueil</strong>.</li>
+                  </ol>
+                ) : (
+                  <p className="text-xs">
+                    Sur Chrome ou Edge (Android) : menu du navigateur → <strong className="text-foreground">Installer l’application</strong>.
+                  </p>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           </>
         )}
-
-        <Collapsible className="mt-10 rounded-xl border border-border bg-background">
-          <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors hover:bg-surface [&[data-state=open]>svg]:rotate-180">
-            <span className="flex items-center gap-2">
-              <Smartphone className="h-4 w-4 text-primary" aria-hidden />
-              Installer cette page sur votre téléphone
-            </span>
-            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200" aria-hidden />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 border-t border-border px-4 pb-4 pt-3 text-sm text-muted-foreground">
-            <p>Ajoutez l’historique à votre écran d’accueil pour l’ouvrir comme une application.</p>
-            {deferredPrompt ? (
-              <Button type="button" size="sm" onClick={() => void runInstall()}>
-                Ajouter à l’écran d’accueil
-              </Button>
-            ) : isIOS ? (
-              <ol className="list-inside list-decimal space-y-1 text-foreground/90">
-                <li>Ouvrez cette page dans <strong>Safari</strong>.</li>
-                <li>Touchez <strong>Partager</strong>.</li>
-                <li>Choisissez <strong>Sur l’écran d’accueil</strong>.</li>
-              </ol>
-            ) : (
-              <p className="text-xs">
-                Sur Chrome ou Edge (Android) : menu du navigateur → <strong className="text-foreground">Installer l’application</strong>.
-              </p>
-            )}
-          </CollapsibleContent>
-        </Collapsible>
       </main>
 
       <SubmissionDetails
         submission={selected}
+        onPrepareQuote={prepareQuote}
         onClose={() => setSelected(null)}
         onDeleted={(id) => {
           setSelected(null);
