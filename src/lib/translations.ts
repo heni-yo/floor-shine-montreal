@@ -219,12 +219,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'stains.samples.body': 'Une fois le plancher sablé, nous appliquons quelques teintures côte à côte. Vous comparez à la lumière de votre pièce, puis nous teignons et vernissons tout le plancher dans la couleur choisie.',
     'stains.cta': 'Demander une soumission',
     'form.colorLink': 'Voir les couleurs de teinture',
-
-    // Avant / après
-    'gallery.beforeAfter.title': 'Avant / après',
-    'gallery.beforeAfter.subtitle': 'Les mêmes pièces, avant et après notre passage.',
-    'gallery.before': 'Avant',
-    'gallery.after': 'Après',
   },
   en: {
     // Navigation
@@ -439,12 +433,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'stains.samples.body': 'Once the floor is sanded, we apply a few stains side by side. You compare them in your room’s light, then we stain and finish the whole floor in the colour you chose.',
     'stains.cta': 'Request a quote',
     'form.colorLink': 'See the stain colours',
-
-    // Before / after
-    'gallery.beforeAfter.title': 'Before / after',
-    'gallery.beforeAfter.subtitle': 'The same rooms, before and after our work.',
-    'gallery.before': 'Before',
-    'gallery.after': 'After',
   },
 };
 
