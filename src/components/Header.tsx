@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { Menu, X, Phone, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSectionNav } from '@/hooks/useSectionNav';
+import { usePathname } from 'next/navigation';
 import { SERVICE_PAGES, PHONE_DISPLAY, PHONE_HREF, servicePath } from '@/lib/site';
+import { STAIN_PATHS } from '@/lib/stainColors';
 
 const SECTION_ITEMS = [
   { key: 'nav.why', id: 'why-us' },
@@ -20,6 +22,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { language, t } = useLanguage();
   const { home, hrefFor, handleClick, scrollToTop, switchLangHref } = useSectionNav();
+  const pathname = usePathname();
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
@@ -60,7 +63,7 @@ const Header = () => {
           </Link>
 
           {/* Navigation desktop */}
-          <nav className="hidden items-center gap-7 lg:flex">
+          <nav className="hidden items-center gap-5 whitespace-nowrap lg:flex xl:gap-7">
             <div
               className="relative"
               onMouseEnter={() => setIsServicesOpen(true)}
@@ -109,6 +112,14 @@ const Header = () => {
                 {t(item.key)}
               </a>
             ))}
+
+            <Link
+              href={STAIN_PATHS[language]}
+              aria-current={pathname === STAIN_PATHS[language] ? 'page' : undefined}
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground"
+            >
+              {t('nav.stains')}
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2 md:gap-3">
@@ -122,7 +133,7 @@ const Header = () => {
 
             <a
               href={PHONE_HREF}
-              className="hidden items-center gap-2 text-sm font-semibold text-foreground transition-colors hover:text-primary md:flex"
+              className="hidden items-center gap-2 text-sm font-semibold text-foreground transition-colors hover:text-primary whitespace-nowrap md:flex lg:hidden xl:flex"
             >
               <Phone className="h-4 w-4 text-primary" aria-hidden />
               {PHONE_DISPLAY}
@@ -131,7 +142,7 @@ const Header = () => {
             <a
               href={hrefFor('quote-form')}
               onClick={handleClick('quote-form')}
-              className="btn-primary hidden md:inline-flex"
+              className="btn-primary hidden whitespace-nowrap md:inline-flex"
             >
               {t('nav.quote')}
             </a>
@@ -185,6 +196,9 @@ const Header = () => {
                   {t(item.key)}
                 </a>
               ))}
+              <Link href={STAIN_PATHS[language]} onClick={close} className="py-3 text-muted-foreground">
+                {t('nav.stains')}
+              </Link>
             </div>
 
             <div className="mt-4 flex flex-col gap-3 border-t border-border pt-5">

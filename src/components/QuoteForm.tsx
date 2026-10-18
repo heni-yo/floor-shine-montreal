@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Send, CheckCircle, Upload, X, Loader2, Check, Phone } from 'lucide-react';
+import { Send, CheckCircle, Upload, X, Loader2, Check, Phone, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PHONE_DISPLAY, PHONE_HREF, type ServiceKey } from '@/lib/site';
+import { STAIN_PATHS } from '@/lib/stainColors';
 
 /** Mêmes limites que le serveur (server/app.ts : multer). */
 const MAX_PHOTOS = 10;
@@ -53,7 +54,7 @@ interface FormErrors {
 }
 
 const QuoteForm = ({ defaultService }: { defaultService?: ServiceKey } = {}) => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   /** Champ piège : invisible pour les humains, rempli par les robots. */
   const honeypotRef = useRef<HTMLInputElement>(null);
@@ -535,6 +536,16 @@ const QuoteForm = ({ defaultService }: { defaultService?: ServiceKey } = {}) => 
                         </Label>
                       </div>
                     </RadioGroup>
+                    {/* Nouvel onglet : le client ne perd pas ce qu'il a déjà saisi. */}
+                    <a
+                      href={STAIN_PATHS[language]}
+                      target="_blank"
+                      rel="noopener"
+                      className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                    >
+                      {t('form.colorLink')}
+                      <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                    </a>
                   </div>
                 </div>
               </div>

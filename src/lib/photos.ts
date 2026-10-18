@@ -80,6 +80,36 @@ export const PHOTOS = {
   brightRoom: photo('IMG_0108.jpg', 2048, 1536,
     'Plancher de bois naturel verni dans une pièce lumineuse',
     'Varnished natural wood floor in a bright room'),
+  stainedLoft: photo('mezzanine-plancher-teint.jpg', 1536, 2048,
+    'Plancher de mezzanine teint brun doré, au fini lustré',
+    'Loft floor stained golden brown, with a glossy finish'),
+  parquetNatural: photo('parqueterie-naturelle-vernie.jpg', 2048, 1536,
+    'Parqueterie naturelle sablée et vernie au fini lustré',
+    'Natural parquet sanded and varnished to a glossy finish'),
+  freshlySanded: photo('plancher-chene-sable.jpg', 2048, 1536,
+    'Plancher de chêne fraîchement sablé, prêt pour la finition',
+    'Freshly sanded oak floor, ready for finishing'),
+  parquetSamples: photo('echantillons-teinture-parqueterie.jpg', 2048, 1536,
+    'Deux échantillons de teinture délimités sur une parqueterie sablée',
+    'Two stain samples taped off on a sanded parquet floor'),
+  parquetSamplesDetail: photo('echantillons-teinture-parqueterie-detail.jpg', 1536, 2048,
+    'Gros plan sur deux échantillons de teinture sur une parqueterie',
+    'Close-up of two stain samples on a parquet floor'),
+  sandedSamples: photo('echantillons-teinture-plancher-sable.jpg', 1536, 2048,
+    'Échantillons de teinture sur un plancher fraîchement sablé, en haut d’un escalier',
+    'Stain samples on a freshly sanded floor at the top of a staircase'),
+  wornBefore: photo('avant-vernis-use.jpg', 1536, 2048,
+    'Avant : vieux vernis usé et taché près d’une porte-fenêtre',
+    'Before: worn, stained old finish by a patio door'),
+  wornAfter: photo('apres-vernis-use-sable.jpg', 2048, 1536,
+    'Après : la même pièce sablée jusqu’au bois naturel',
+    'After: the same room sanded back to bare wood'),
+  paintedBefore: photo('avant-plancher-peint.jpg', 2048, 1536,
+    'Avant : plancher de bois franc recouvert de peinture grise',
+    'Before: hardwood floor covered in grey paint'),
+  paintedAfter: photo('apres-plancher-peint-sable.jpg', 2048, 1536,
+    'Après : la peinture retirée, le bois franc d’origine sablé à neuf',
+    'After: paint removed, the original hardwood sanded like new'),
 } as const;
 
 /** Image d'en-tête de l'accueil : un vrai chantier, en format paysage. */
@@ -88,7 +118,9 @@ export const HERO_PHOTO = PHOTOS.fireplaceOak;
 /** Galerie complète : les plus beaux résultats d'abord, les étapes de travail ensuite. */
 export const GALLERY: Photo[] = [
   PHOTOS.fireplaceOak,
+  PHOTOS.stainedLoft,
   PHOTOS.diningRoom,
+  PHOTOS.parquetNatural,
   PHOTOS.darkStairs,
   PHOTOS.darkOak,
   PHOTOS.parquet,
@@ -100,13 +132,45 @@ export const GALLERY: Photo[] = [
   PHOTOS.naturalOak,
   PHOTOS.naturalFloor,
   PHOTOS.brightRoom,
+  PHOTOS.freshlySanded,
   PHOTOS.stairsSanding,
   PHOTOS.sanding,
   PHOTOS.stainSamples,
+  PHOTOS.parquetSamples,
+  PHOTOS.sandedSamples,
   PHOTOS.stairsSamples,
   PHOTOS.varnishing,
   PHOTOS.stainChoice,
 ];
+
+/**
+ * Avant / après : uniquement des paires prises dans la même pièce (même
+ * porte-fenêtre et plinthe chauffante ; même bouche d'air et même cadre de
+ * porte). Les photos d'un même chantier mais de pièces différentes n'y sont pas.
+ */
+export type BeforeAfter = { before: Photo; after: Photo; caption: Record<Lang, string> };
+
+export const BEFORE_AFTER: BeforeAfter[] = [
+  {
+    before: PHOTOS.paintedBefore,
+    after: PHOTOS.paintedAfter,
+    caption: {
+      fr: 'Plancher peint en gris : le bois franc d’origine retrouvé',
+      en: 'Grey painted floor: the original hardwood brought back',
+    },
+  },
+  {
+    before: PHOTOS.wornBefore,
+    after: PHOTOS.wornAfter,
+    caption: {
+      fr: 'Vieux vernis usé et taché : le bois remis à nu',
+      en: 'Worn, stained old finish: the wood back to bare',
+    },
+  },
+];
+
+/** Photos d'essais de teinture, pour la page des couleurs. */
+export const STAIN_SAMPLE_PHOTOS: Photo[] = [PHOTOS.sandedSamples, PHOTOS.parquetSamplesDetail];
 
 /**
  * Par service : `cover` pour les cartes (recadrage paysage), `hero` pour

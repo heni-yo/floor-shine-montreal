@@ -159,11 +159,8 @@ export const buildServiceSchema = (service: ServicePage, lang: Lang) => ({
   })),
 });
 
-export const buildBreadcrumbSchema = (
-  service: ServicePage,
-  lang: Lang,
-  serviceName: string,
-) => ({
+/** Fil d'Ariane Accueil → page, pour n'importe quelle page de premier niveau. */
+export const buildPageBreadcrumbSchema = (lang: Lang, pageName: string, path: string) => ({
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
@@ -176,11 +173,14 @@ export const buildBreadcrumbSchema = (
     {
       '@type': 'ListItem',
       position: 2,
-      name: serviceName,
-      item: `${SITE_URL}${servicePath(service, lang)}`,
+      name: pageName,
+      item: `${SITE_URL}${path}`,
     },
   ],
 });
+
+export const buildBreadcrumbSchema = (service: ServicePage, lang: Lang, serviceName: string) =>
+  buildPageBreadcrumbSchema(lang, serviceName, servicePath(service, lang));
 
 /** FAQPage : n’expose que les questions réellement affichées sur la page. */
 export const buildFaqSchema = (qa: { question: string; answer: string }[]) => ({

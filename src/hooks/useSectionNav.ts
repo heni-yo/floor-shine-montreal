@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { MouseEvent } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SERVICE_PAGES, homePath, servicePath } from '@/lib/site';
+import { STAIN_PATHS } from '@/lib/stainColors';
 
 /**
  * L'accueil et les pages service rendent les mêmes ancres (#faq, #quote-form…).
@@ -42,7 +43,9 @@ export const useSectionNav = () => {
   );
   const switchLangHref = match
     ? servicePath(match, otherLang)
-    : homePath(otherLang);
+    : pathname === STAIN_PATHS[language]
+      ? STAIN_PATHS[otherLang]
+      : homePath(otherLang);
 
   return { home, hrefFor, handleClick, scrollToTop, switchLangHref, otherLang };
 };

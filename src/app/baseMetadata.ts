@@ -8,6 +8,8 @@ import {
   type Lang,
   type ServicePage,
 } from '@/lib/site';
+import { STAIN_PATHS } from '@/lib/stainColors';
+import { translate } from '@/lib/translations';
 
 /** Métadonnées d'une page service, dans une langue donnée. */
 export const serviceMetadata = (service: ServicePage, lang: Lang): Metadata => {
@@ -22,6 +24,23 @@ export const serviceMetadata = (service: ServicePage, lang: Lang): Metadata => {
       description: service.metaDescription[lang],
       url: path,
     },
+  };
+};
+
+/** Page des couleurs de teinture, avec son équivalent dans l'autre langue. */
+export const stainColorsMetadata = (lang: Lang): Metadata => {
+  const title = translate(lang, 'stains.metaTitle');
+  const description = translate(lang, 'stains.metaDescription');
+  const path = STAIN_PATHS[lang];
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: path,
+      languages: { 'fr-CA': STAIN_PATHS.fr, 'en-CA': STAIN_PATHS.en, 'x-default': STAIN_PATHS.fr },
+    },
+    openGraph: { title, description, url: path },
   };
 };
 

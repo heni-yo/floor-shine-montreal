@@ -13,6 +13,7 @@ import {
   AREAS_EN,
   servicePath,
 } from '@/lib/site';
+import { STAIN_PATHS } from '@/lib/stainColors';
 
 const SECTION_LINKS = [
   { key: 'nav.why', id: 'why-us' },
@@ -101,6 +102,14 @@ const Footer = () => {
                   </a>
                 </li>
               ))}
+              <li>
+                <Link
+                  href={STAIN_PATHS[language]}
+                  className="text-sm text-accent-foreground/75 transition-colors hover:text-accent-foreground"
+                >
+                  {t('nav.stains')}
+                </Link>
+              </li>
             </ul>
           </nav>
 
